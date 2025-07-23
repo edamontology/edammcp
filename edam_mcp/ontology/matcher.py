@@ -47,9 +47,10 @@ class ConceptMatcher:
                 logger.error(f"Failed to load embedding model '{settings.embedding_model}': {e}")
                 # Try alternative model names as fallbacks
                 fallback_models = [
-                    "sentence-transformers/all-MiniLM-L6-v2",
+                    "all-MiniLM-L6-v2",
                     "all-mpnet-base-v2",
-                    "paraphrase-MiniLM-L6-v2"
+                    "paraphrase-MiniLM-L6-v2",
+                    "all-MiniLM-L12-v2"
                 ]
                 
                 for fallback_model in fallback_models:

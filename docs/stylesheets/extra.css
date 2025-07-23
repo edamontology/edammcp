@@ -1,0 +1,203 @@
+/* Custom styles for EDAM MCP Server documentation */
+
+/* Code block styling */
+.highlight {
+    border-radius: 8px;
+    border: 1px solid #e1e4e8;
+}
+
+/* API documentation styling */
+.api-endpoint {
+    background: #f6f8fa;
+    border-left: 4px solid #0366d6;
+    padding: 16px;
+    margin: 16px 0;
+    border-radius: 4px;
+}
+
+.api-method {
+    font-weight: bold;
+    color: #0366d6;
+}
+
+/* Example output styling */
+.example-output {
+    background: #f1f8ff;
+    border: 1px solid #c8e1ff;
+    border-radius: 6px;
+    padding: 12px;
+    margin: 12px 0;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.9em;
+}
+
+/* Architecture diagram styling */
+.architecture-diagram {
+    text-align: center;
+    margin: 24px 0;
+    padding: 16px;
+    background: #fafbfc;
+    border-radius: 8px;
+}
+
+/* Feature highlights */
+.feature-highlight {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.feature-highlight h3 {
+    color: white;
+    margin-top: 0;
+}
+
+/* Code copy button styling */
+.md-clipboard {
+    color: #586069;
+}
+
+.md-clipboard:hover {
+    color: #0366d6;
+}
+
+/* Navigation styling */
+.md-nav__title {
+    color: #24292e;
+    font-weight: 600;
+}
+
+.md-nav__link {
+    color: #586069;
+}
+
+.md-nav__link:hover {
+    color: #0366d6;
+}
+
+/* Table styling */
+.md-typeset table {
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.md-typeset table th {
+    background: #f6f8fa;
+    border-bottom: 2px solid #e1e4e8;
+    font-weight: 600;
+}
+
+/* Admonition styling */
+.admonition {
+    border-radius: 6px;
+    border-left-width: 4px;
+}
+
+.admonition.info {
+    border-left-color: #0366d6;
+    background: #f1f8ff;
+}
+
+.admonition.warning {
+    border-left-color: #f6a434;
+    background: #fffbf0;
+}
+
+.admonition.tip {
+    border-left-color: #28a745;
+    background: #f0fff4;
+}
+
+/* Button styling */
+.md-button {
+    border-radius: 6px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.md-button--primary {
+    background: #0366d6;
+    border-color: #0366d6;
+}
+
+.md-button--primary:hover {
+    background: #0256cc;
+    border-color: #0256cc;
+}
+
+/* Search styling */
+.md-search__input {
+    border-radius: 20px;
+    border: 1px solid #e1e4e8;
+}
+
+.md-search__input:focus {
+    border-color: #0366d6;
+    box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+}
+
+/* Footer styling */
+.md-footer {
+    background: #f6f8fa;
+    border-top: 1px solid #e1e4e8;
+}
+
+/* Responsive design improvements */
+@media (max-width: 768px) {
+    .feature-highlight {
+        padding: 16px;
+        margin: 16px 0;
+    }
+    
+    .api-endpoint {
+        padding: 12px;
+        margin: 12px 0;
+    }
+    
+    .example-output {
+        padding: 8px;
+        margin: 8px 0;
+        font-size: 0.8em;
+    }
+}
+
+/* Dark mode support */
+[data-md-color-scheme="slate"] {
+    --md-primary-fg-color: #58a6ff;
+    --md-primary-fg-color--light: #79c0ff;
+    --md-primary-fg-color--dark: #1f6feb;
+}
+
+[data-md-color-scheme="slate"] .feature-highlight {
+    background: linear-gradient(135deg, #1f6feb 0%, #9d4edd 100%);
+}
+
+[data-md-color-scheme="slate"] .api-endpoint {
+    background: #21262d;
+    border-left-color: #58a6ff;
+}
+
+[data-md-color-scheme="slate"] .example-output {
+    background: #0d1117;
+    border-color: #30363d;
+}
+
+/* Print styles */
+@media print {
+    .feature-highlight {
+        background: #f6f8fa !important;
+        color: #24292e !important;
+    }
+    
+    .md-nav {
+        display: none;
+    }
+    
+    .md-header {
+        display: none;
+    }
+} 

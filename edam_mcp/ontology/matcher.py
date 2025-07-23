@@ -25,11 +25,12 @@ class ConceptMatcher:
         self.ontology_loader = ontology_loader
         self.embedding_model = None
         self.concept_embeddings: Dict[str, np.ndarray] = {}
+        self._model_available = False
         # Don't build embeddings immediately - do it lazily when needed
     
     def _build_embeddings(self) -> None:
         """Build embeddings for all concepts in the ontology."""
-        # Lazy import of sentence_transformers
+        # Lazy import of sentence_transformers with better error handling
         try:
             from sentence_transformers import SentenceTransformer
         except ImportError:
@@ -37,7 +38,34 @@ class ConceptMatcher:
             return
         
         if self.embedding_model is None:
-            self.embedding_model = SentenceTransformer(settings.embedding_model)
+            try:
+                # Try loading the model with the correct name format
+                self.embedding_model = SentenceTransformer(settings.embedding_model)
+                self._model_available = True
+                logger.info(f"Successfully loaded embedding model: {settings.embedding_model}")
+            except Exception as e:
+                logger.error(f"Failed to load embedding model '{settings.embedding_model}': {e}")
+                # Try alternative model names as fallbacks
+                fallback_models = [
+                    "sentence-transformers/all-MiniLM-L6-v2",
+                    "all-mpnet-base-v2",
+                    "paraphrase-MiniLM-L6-v2"
+                ]
+                
+                for fallback_model in fallback_models:
+                    try:
+                        logger.info(f"Trying fallback model: {fallback_model}")
+                        self.embedding_model = SentenceTransformer(fallback_model)
+                        self._model_available = True
+                        logger.info(f"Successfully loaded fallback model: {fallback_model}")
+                        break
+                    except Exception as fallback_error:
+                        logger.warning(f"Fallback model {fallback_model} failed: {fallback_error}")
+                        continue
+                
+                if not self._model_available:
+                    logger.error("No embedding model could be loaded. Semantic matching will not be available.")
+                    return
         
         logger.info("Building concept embeddings...")
         
@@ -55,8 +83,12 @@ class ConceptMatcher:
             processed_text = preprocess_text(text)
             
             # Generate embedding
-            embedding = self.embedding_model.encode(processed_text)
-            self.concept_embeddings[uri] = embedding
+            try:
+                embedding = self.embedding_model.encode(processed_text)
+                self.concept_embeddings[uri] = embedding
+            except Exception as e:
+                logger.warning(f"Failed to generate embedding for concept {uri}: {e}")
+                continue
         
         logger.info(f"Built embeddings for {len(self.concept_embeddings)} concepts")
     
@@ -82,6 +114,11 @@ class ConceptMatcher:
         if not self.concept_embeddings:
             self._build_embeddings()
         
+        # If model is not available, return empty list
+        if not self._model_available or not self.concept_embeddings:
+            logger.warning("Embedding model not available, cannot perform semantic matching")
+            return []
+        
         # Preprocess input text
         processed_description = preprocess_text(description)
         
@@ -90,7 +127,11 @@ class ConceptMatcher:
             processed_description += " " + preprocess_text(context)
         
         # Generate embedding for the description
-        description_embedding = self.embedding_model.encode(processed_description)
+        try:
+            description_embedding = self.embedding_model.encode(processed_description)
+        except Exception as e:
+            logger.error(f"Failed to encode description: {e}")
+            return []
         
         # Calculate similarities
         similarities = self._calculate_similarities(description_embedding)
@@ -237,4 +278,4 @@ class ConceptMatcher:
                 for child_uri in concept["children"]:
                     queue.append((child_uri, distance + 1))
         
-        return neighbors 
+        return neighbors

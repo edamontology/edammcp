@@ -33,6 +33,11 @@ class ConceptMatcher:
         # Lazy import of sentence_transformers with better error handling
         try:
             from sentence_transformers import SentenceTransformer
+            import warnings
+            # Suppress sentence-transformers warnings temporarily
+            st_logger = logging.getLogger('sentence_transformers')
+            original_level = st_logger.level
+            st_logger.setLevel(logging.ERROR)
         except ImportError:
             logger.error("sentence_transformers not available. Install with: pip install sentence-transformers")
             return
@@ -40,7 +45,9 @@ class ConceptMatcher:
         if self.embedding_model is None:
             try:
                 # Try loading the model with the correct name format
-                self.embedding_model = SentenceTransformer(settings.embedding_model)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    self.embedding_model = SentenceTransformer(settings.embedding_model)
                 self._model_available = True
                 logger.info(f"Successfully loaded embedding model: {settings.embedding_model}")
             except Exception as e:
@@ -55,18 +62,22 @@ class ConceptMatcher:
                 
                 for fallback_model in fallback_models:
                     try:
-                        logger.info(f"Trying fallback model: {fallback_model}")
-                        self.embedding_model = SentenceTransformer(fallback_model)
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore")
+                            self.embedding_model = SentenceTransformer(fallback_model)
                         self._model_available = True
                         logger.info(f"Successfully loaded fallback model: {fallback_model}")
                         break
-                    except Exception as fallback_error:
-                        logger.warning(f"Fallback model {fallback_model} failed: {fallback_error}")
+                    except Exception:
+                        # Silently continue to next fallback without logging warnings
                         continue
                 
                 if not self._model_available:
                     logger.error("No embedding model could be loaded. Semantic matching will not be available.")
                     return
+            finally:
+                # Restore original logging level
+                st_logger.setLevel(original_level)
         
         logger.info("Building concept embeddings...")
         

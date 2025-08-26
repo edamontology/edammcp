@@ -48,15 +48,16 @@ async def map_to_edam_concept(request: MappingRequest, context: Context) -> Mapp
                 confidence_threshold=request.min_confidence,
             )
 
+        matches = []
         # Extract matches from bio.tools
-        context.log.info("Looking for ontology terms on bio.tools...")
-        matches = concept_matcher.get_concepts_from_biotools(
-            tool_name=request.name,
-            tool_curie=request.biotools_curie,
-            max_results=request.max_results,
-            ontology_type=request.ontology_type,
-        )
-        context.log.info(f"Found {len(matches)} terms on bio.tools.")
+        if request.name:
+            context.log.info("Looking for ontology terms on bio.tools...")
+            matches = concept_matcher.get_concepts_from_biotools(
+                tool_name=request.name,
+                tool_curie=request.biotools_curie,
+                ontology_type=request.ontology_type,
+            )
+            context.log.info(f"Found {len(matches)} terms on bio.tools.")
 
         # Perform semantic matching
         context.log.info("Performing semantic matching...")
@@ -70,8 +71,8 @@ async def map_to_edam_concept(request: MappingRequest, context: Context) -> Mapp
         context.log.info(f"Found {len(matches)} semantic matches")
 
         return MappingResponse(
-            matches=matches,
-            total_matches=len(matches),
+            matches=matches[: request.max_results],
+            total_matches=len(matches[: request.max_results]),
             has_exact_match=False,
             confidence_threshold=request.min_confidence,
         )

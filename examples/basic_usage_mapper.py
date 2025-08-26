@@ -59,6 +59,46 @@ async def example_mapping():
         except Exception as e:
             print(f"  Error: {e}")
 
+    biotools_tests = [
+        {
+            "description": "sequence alignment tool",
+            "name": "clustalo",
+            "biotools_curie": "biotools:clustalo",
+            "ontology_type": "operation",
+        },
+        {
+            "description": "Sequence alignment report in html format",
+            "name": "multiqc",
+            "biotools_curie": None,
+            "ontology_type": "output",
+        },
+    ]
+
+    for test in biotools_tests:
+        print(f"Mapping with bio.tools: {test.get('name')}")
+
+        try:
+            response = await map_description_to_concepts(
+                description=test.get("description"),
+                name=test.get("name"),
+                biotools_curie=test.get("biotools_curie"),
+                ontology_type=test.get("ontology_type"),
+                max_results=3,
+                min_confidence=0.5,
+            )
+
+            if response.matches:
+                print(f"  Found {response.total_matches} matches:")
+                for match in response.matches:
+                    print(f"    - {match.concept_label} (confidence: {match.confidence:.2f})")
+                    print(f"      URI: {match.concept_uri}")
+                    print(f"      Type: {match.concept_type}")
+            else:
+                print("  No matches found")
+
+        except Exception as e:
+            print(f"  Error: {e}")
+
 
 async def main():
     """Run the examples."""

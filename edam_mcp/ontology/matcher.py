@@ -58,7 +58,7 @@ class ConceptMatcher:
             processed_description += " " + preprocess_text(context)
 
         # Generate embedding for the description
-        description_embedding = self.embedding_model.encode(processed_description)
+        description_embedding = self.embedding_model.encode(processed_description, show_progress_bar=False)
 
         # Calculate similarities
         similarities = self._calculate_similarities(description_embedding)
@@ -87,7 +87,6 @@ class ConceptMatcher:
         self,
         tool_name: str,
         tool_curie: str | None = None,
-        max_results: int | None = None,
         ontology_type: str = "operation",
     ) -> list[ConceptMatch]:
         """Get EDAM ontology concepts from bio.tools.
@@ -95,14 +94,18 @@ class ConceptMatcher:
         Args:
             tool_name (str): The name of the tool.
             tool_curie (str|None): The biotoolsCURIE of the tool.
-            max_results (int|None): Maximum number of matches to return.
             ontology_type (str): What ontology terms to retrieve. Can be one of [operation, input, output, topic]
 
         Returns:
             List of concept matches.
         """
         tool_info = self._get_biotools_ontology(tool_name, tool_curie)
-        ontology_terms = tool_info.get(ontology_type)
+        try:
+            ontology_terms = getattr(tool_info, ontology_type)
+        except AttributeError:
+            # Info not found
+            logger.error(f"Bio.tools information for tool {tool_name} not found.")
+            return []
 
         matches = []
         if ontology_type in ["operation", "topic"]:
@@ -143,10 +146,7 @@ class ConceptMatcher:
                     )
                     matches.append(match)
 
-        if max_results:
-            return matches[:max_results]
-        else:
-            return matches
+        return matches
 
     def _build_embeddings(self) -> None:
         """Build embeddings for all concepts in the ontology."""
@@ -169,7 +169,7 @@ class ConceptMatcher:
             processed_text = preprocess_text(text)
 
             # Generate embedding
-            embedding = self.embedding_model.encode(processed_text)
+            embedding = self.embedding_model.encode(processed_text, show_progress_bar=False)
             self.concept_embeddings[uri] = embedding
 
         logger.info(f"Built embeddings for {len(self.concept_embeddings)} concepts")
@@ -287,47 +287,64 @@ class ConceptMatcher:
 
         return neighbors
 
+    def _get_biotools_ontology(self, tool_name: str, biotools_curie: str | None) -> BioToolsInfo | None:
+        """
+        Given a specific entry of the tools list associated to the module, return the biotools input ontology ID.
+        Get the associated ontology terms from a tool in bio.tools.
 
-def _get_biotools_ontology(self, tool_name: str, biotools_curie: str | None) -> BioToolsInfo | None:
-    """
-    Given a specific entry of the tools list associated to the module, return the biotools input ontology ID.
-    Get the associated ontology terms from a tool in bio.tools.
+        Args:
+            tool_name (str): The name of the tool to get the bio.tools information for.
+            biotools_curie (str|None): The biotools CURIE to get the bio.tools information for.
 
-    Args:
-        tool_name (str): The name of the tool to get the bio.tools information for.
-        biotools_curie (str|None): The biotools CURIE to get the bio.tools information for.
+        Returns:
+            BioToolsInfo: The information extracted from bio.tools for the tool.
+        """
 
-    Returns:
-        BioToolsInfo: The information extracted from bio.tools for the tool.
-    """
+        url = f"https://bio.tools/api/t/?q={tool_name}&format=json"
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
 
-    url = f"https://bio.tools/api/t/?q={tool_name}&format=json"
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
+            data = json.loads(response.text)
+            data_list = data.get("list", [])
 
-        data = json.loads(response.text)
-        data_list = data.get("list", [])
+        except requests.exceptions.RequestException:
+            logger.error(f"Could not find the bio.tools entry for the tool {tool_name}.")
+            return None
 
-        if biotools_curie:
-            selected_tool = [
-                tool for tool in data_list if tool.get("biotoolsCURIE", None).lower() == biotools_curie.lower()
-            ][0]
-        else:
-            selected_tool = [tool for tool in data_list if tool.get("name", None).lower() == tool_name.lower()][0]
+        selected_tool = []
+        try:
+            if biotools_curie:
+                selected_tool = [
+                    tool for tool in data_list if tool.get("biotoolsCURIE", None).lower() == biotools_curie.lower()
+                ][0]
+            else:
+                selected_tool = [tool for tool in data_list if tool.get("name", None).lower() == tool_name.lower()][0]
+        except IndexError:
+            pass
+
+        if not selected_tool:
+            logger.error(f"The tool '{tool_name}' with biotools CUIRE '{biotools_curie}' was not found.")
+            return None
+
+        tool_functions = selected_tool.get("function", [])
+
+        operations = []
+        inputs = []
+        outputs = []
+        for function in tool_functions:
+            operations += function.get("operation", "")
+            inputs += function.get("input", "")
+            outputs += function.get("output", "")
 
         tool_info = BioToolsInfo(
             name=selected_tool.get("name", ""),
             biotools_curie=selected_tool.get("biotoolsCURIE", ""),
             description=selected_tool.get("description", ""),
-            operation=selected_tool.get("operation", ""),
-            input=selected_tool.get("input", ""),
-            output=selected_tool.get("output", ""),
-            topic=selected_tool.get("topic", ""),
+            operation=operations,
+            input=inputs,
+            output=outputs,
+            topic=selected_tool.get("topic", []),
         )
 
         return tool_info
-
-    except requests.exceptions.RequestException:
-        logger.error(f"Could not find the bio.tools entry for the tool {tool_name}.")
-        return None

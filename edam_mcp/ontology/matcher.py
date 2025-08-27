@@ -1,6 +1,5 @@
 """Concept matching functionality for mapping descriptions to EDAM concepts."""
 
-import json
 import logging
 
 import numpy as np
@@ -305,7 +304,7 @@ class ConceptMatcher:
             response = requests.get(url)
             response.raise_for_status()
 
-            data = json.loads(response.text)
+            data = response.json()
             data_list = data.get("list", [])
 
         except requests.exceptions.RequestException:

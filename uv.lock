@@ -364,7 +364,6 @@ source = { editable = "." }
 dependencies = [
     { name = "fastmcp" },
     { name = "numpy" },
-    { name = "owlready2" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "rdflib" },
@@ -398,7 +397,6 @@ requires-dist = [
     { name = "mkdocstrings-python", marker = "extra == 'dev'", specifier = ">=1.7.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "numpy", specifier = ">=1.24.0" },
-    { name = "owlready2", specifier = ">=0.45.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.7.0" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },
@@ -1372,12 +1370,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/02/2e/58d83848dd1a79cb9
 wheels = [
     { url = "https://files.pythonhosted.org/packages/12/cf/03675d8bd8ecbf4445504d8071adab19f5f993676795708e36402ab38263/openapi_pydantic-0.5.1-py3-none-any.whl", hash = "sha256:a3a09ef4586f5bd760a8df7f43028b60cafb6d9f61de2acba9574766255ab146", size = 96381, upload-time = "2025-01-08T19:29:25.275Z" },
 ]
-
-[[package]]
-name = "owlready2"
-version = "0.48"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/8d/79/01daa72fbd07b1d4dd0907356d0ae486a684f0bd4654430f27a3e31206ee/owlready2-0.48.tar.gz", hash = "sha256:86b4d8500d769a674c524b54397fdd738ff5d0a96878432b69f4d606d6a7a4d8", size = 27298462, upload-time = "2025-05-27T09:15:03.095Z" }
 
 [[package]]
 name = "packaging"

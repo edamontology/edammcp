@@ -9,8 +9,8 @@ class Settings(BaseSettings):
 
     # EDAM Ontology Configuration
     edam_ontology_url: str = Field(
-        default="https://raw.githubusercontent.com/edamontology/edamontology/master/EDAM_dev.owl",
-        description="URL to the EDAM ontology OWL file",
+        default="https://edamontology.org/EDAM_stable.owl",
+        description="URL to the latest stable EDAM ontology OWL file",
     )
 
     # Matching Configuration

@@ -3,13 +3,14 @@
 
 import subprocess
 import sys
+from pathlib import Path
 
 
 def run_command(cmd: list[str], description: str) -> bool:
     """Run a command and return success status."""
     print(f"🔄 {description}...")
     try:
-        _ = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
         print(f"✅ {description} completed successfully")
         return True
     except subprocess.CalledProcessError as e:
@@ -25,17 +26,17 @@ def main():
     """Main installation function."""
     print("🚀 Installing EDAM MCP in development mode")
     print("=" * 50)
-
+    
     # Install dependencies
     if not run_command(["uv", "sync", "--dev"], "Installing dependencies"):
         print("❌ Failed to install dependencies")
         sys.exit(1)
-
+    
     # Install the package in development mode
     if not run_command(["uv", "pip", "install", "-e", "."], "Installing package in development mode"):
         print("❌ Failed to install package in development mode")
         sys.exit(1)
-
+    
     # Test the installation
     test_script = """
 import sys
@@ -47,21 +48,17 @@ except ImportError as e:
     print(f"❌ Failed to import edam_mcp: {e}")
     sys.exit(1)
 """
-
+    
     print("🔄 Testing package installation...")
     try:
-        result = subprocess.run(
-            [sys.executable, "-c", test_script],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
+        result = subprocess.run([sys.executable, "-c", test_script], 
+                              capture_output=True, text=True, check=True)
         print(result.stdout)
     except subprocess.CalledProcessError as e:
         print(f"❌ Package test failed: {e}")
         print(e.stderr)
         sys.exit(1)
-
+    
     print("\n🎉 Development installation completed!")
     print("\nYou can now run:")
     print("  uv run python examples/basic_usage.py")
@@ -71,4 +68,4 @@ except ImportError as e:
 
 
 if __name__ == "__main__":
-    main()
+    main() 

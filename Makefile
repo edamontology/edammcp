@@ -22,8 +22,9 @@ test-verbose: ## Run tests with verbose output
 test-coverage: ## Run tests with coverage
 	uv run pytest --cov=edam_mcp --cov-report=html
 
-format: ## Format code with ruff
-	uv run ruff format edam_mcp/ tests/ examples/
+format: ## Format code with black and isort
+	uv run black edam_mcp/ tests/ examples/
+	uv run isort edam_mcp/ tests/ examples/
 
 lint: ## Run linting with ruff
 	uv run ruff check edam_mcp/ tests/ examples/

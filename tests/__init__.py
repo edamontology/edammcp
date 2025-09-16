@@ -1,1 +1,1 @@
-"""Tests for the EDAM MCP server."""
+"""Tests for the EDAM MCP server.""" 

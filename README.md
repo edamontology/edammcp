@@ -5,6 +5,8 @@ An MCP (Model Context Protocol) server for EDAM ontology mapping and concept sug
 1. **Map descriptions to EDAM concepts**: Given metadata or free text descriptions, find the most appropriate EDAM ontology concepts with confidence scores
 2. **Suggest new concepts**: When no suitable concept exists, suggest new concepts that could be integrated into the EDAM ontology
 
+Documentation [here](https://edamontology.github.io/edammcp/).
+
 ## 🚀 Quick Start
 
 ### Installation

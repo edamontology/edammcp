@@ -56,7 +56,7 @@ class ConceptMatcher:
             processed_description += " " + preprocess_text(context)
 
         # Generate embedding for the description
-        description_embedding = self.embedding_model.encode(processed_description)
+        description_embedding = self.embedding_model.encode(processed_description, show_progress_bar=False)
 
         # Calculate similarities
         similarities = self._calculate_similarities(description_embedding)

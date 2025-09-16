@@ -2,9 +2,8 @@
 
 import logging
 
-import requests
 from rdflib import RDF, Graph, Namespace, URIRef
-from rdflib.namespace import RDFS, SKOS
+from rdflib.namespace import OWL, RDFS, SKOS
 
 from ..config import settings
 
@@ -12,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 # EDAM namespaces
 EDAM = Namespace("http://edamontology.org/")
-OWL = Namespace("http://www.w3.org/2002/07/owl#")
 
 
 class OntologyLoader:
@@ -38,13 +36,13 @@ class OntologyLoader:
         try:
             logger.info(f"Loading EDAM ontology from {self.ontology_url}")
 
-            # Download ontology file
-            response = requests.get(self.ontology_url, timeout=30)
-            response.raise_for_status()
-
             # Parse RDF/OWL content
             self.graph = Graph()
-            self.graph.parse(data=response.content, format="xml")
+            self.graph.bind("edam", EDAM)
+            self.graph.bind("owl", OWL)
+            self.graph.bind("skos", SKOS)
+
+            self.graph.parse(self.ontology_url)
 
             # Extract concepts
             self._extract_concepts()
@@ -59,6 +57,7 @@ class OntologyLoader:
     def _extract_concepts(self) -> None:
         """Extract concept information from the loaded graph."""
         if not self.graph:
+            logger.error("No EDAM OWL file loaded.")
             return
 
         for concept_uri in self.graph.subjects(RDF.type, OWL.Class):
@@ -80,26 +79,16 @@ class OntologyLoader:
             Dictionary containing concept data or None if invalid.
         """
         try:
-            # Get label
             label = self._get_literal_value(concept_uri, RDFS.label)
             if not label:
                 return None
 
-            # Get definition
-            definition = self._get_literal_value(concept_uri, SKOS.definition)
-
-            # Get synonyms
-            synonyms = self._get_literal_values(concept_uri, SKOS.altLabel)
-
-            # Determine concept type from URI
-            concept_type = self._determine_concept_type(str(concept_uri))
-
             return {
                 "uri": str(concept_uri),
                 "label": label,
-                "definition": definition,
-                "synonyms": synonyms,
-                "type": concept_type,
+                "definition": self._get_literal_value(concept_uri, SKOS.definition),
+                "synonyms": self._get_literal_values(concept_uri, SKOS.altLabel),
+                "type": self._determine_concept_type(str(concept_uri)),
                 "parents": self._get_parent_concepts(concept_uri),
                 "children": self._get_child_concepts(concept_uri),
             }
@@ -189,7 +178,7 @@ class OntologyLoader:
 
         return matches[:max_results]
 
-    def get_concept_hierarchy(self, concept_uri: str) -> list[str]:
+    def get_concept_hierarchy(self, concept_uri: str) -> list[str]:  # TODO: currently  not used
         """Get the full hierarchy path for a concept."""
         hierarchy = []
         current_uri = concept_uri

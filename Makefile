@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test format lint type-check clean run example
+.PHONY: help install install-dev test format lint type-check clean run example docs-build docs-serve docs-deploy
 
 help: ## Show this help message
 	@echo "EDAM MCP Server - Development Commands"
@@ -45,6 +45,15 @@ run: ## Run the MCP server
 
 example: ## Run the basic usage example
 	uv run python examples/basic_usage.py
+
+docs-build: ## Build documentation
+	uv run mkdocs build
+
+docs-serve: ## Serve documentation locally
+	uv run mkdocs serve
+
+docs-deploy: ## Deploy documentation to GitHub Pages
+	uv run mkdocs gh-deploy
 
 clean: ## Clean up generated files
 	find . -type f -name "*.pyc" -delete

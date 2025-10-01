@@ -6,6 +6,7 @@ import string
 
 def preprocess_text(text: str) -> str:
     """Preprocess text for ontology matching.
+    Text is converted to lowercase, removed punctionatione xcept hyphens and underscores, normalized whitespaces and removed leading/trailing whitespaces.
 
     Args:
         text: Input text to preprocess.
@@ -13,19 +14,9 @@ def preprocess_text(text: str) -> str:
     Returns:
         Preprocessed text.
     """
-    if not text:
-        return ""
-
-    # Convert to lowercase
     text = text.lower()
-
-    # Remove punctuation except hyphens and underscores
     text = re.sub(r"[^\w\s\-_]", " ", text)
-
-    # Normalize whitespace
     text = re.sub(r"\s+", " ", text)
-
-    # Remove leading/trailing whitespace
     text = text.strip()
 
     return text

@@ -10,7 +10,7 @@ class ConceptMatch(BaseModel):
 
     concept_label: str = Field(..., description="Human-readable label of the concept")
 
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score for the match (0.0 to 1.0)")
+    confidence: float | None = Field(..., ge=0.0, le=1.0, description="Confidence score for the match (0.0 to 1.0)")
 
     concept_type: str = Field(
         ...,

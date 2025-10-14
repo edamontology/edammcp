@@ -31,6 +31,7 @@ dev = [
     "mkdocstrings-python>=1.7.0",
     "mkdocs-jupyter>=0.24.0",
     "pymdown-extensions>=10.0.0",
+    "responses>=0.24.0",
 ]
 
 [project.scripts]

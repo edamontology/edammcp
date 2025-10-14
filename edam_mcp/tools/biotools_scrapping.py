@@ -6,7 +6,7 @@ from fastmcp.server import Context
 
 from ..models.requests import BiotoolsRequest
 from ..models.responses import BiotoolsResponse
-from ..ontology import BiotoolsScrapper
+from ..ontology.biotools_scrapper import BiotoolsScrapper
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ async def extract_edam_concepts_from_biotools(request: BiotoolsRequest, context:
 
 
 # Alternative function signature for direct use
-async def map_description_to_concepts(
+async def exctract_concepts_from_biotools(
     name: str | None = None,
     biotools_curie: str | None = None,
     ontology_type: str | None = None,

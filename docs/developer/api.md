@@ -267,7 +267,7 @@ class SuggestedConcept(BaseModel):
 class Settings(BaseSettings):
     # EDAM Ontology Configuration
     edam_ontology_url: str = Field(
-        default="https://raw.githubusercontent.com/edamontology/edamontology/master/EDAM_dev.owl",
+        default="https://edamontology.org/EDAM.owl",
         description="URL to the EDAM ontology OWL file"
     )
     

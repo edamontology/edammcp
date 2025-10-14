@@ -169,7 +169,7 @@ Create a `.env` file in the project root:
 
 ```bash
 # EDAM Ontology Configuration
-EDAM_ONTOLOGY_URL=https://raw.githubusercontent.com/edamontology/edamontology/master/EDAM_dev.owl
+EDAM_ONTOLOGY_URL=https://edamontology.org/EDAM.owl
 
 # Matching Configuration
 EDAM_SIMILARITY_THRESHOLD=0.7
@@ -194,7 +194,7 @@ You can also use a configuration file:
 from edam_mcp.config import Settings
 
 settings = Settings(
-    edam_ontology_url="https://raw.githubusercontent.com/edamontology/edamontology/master/EDAM_dev.owl",
+    edam_ontology_url="https://edamontology.org/EDAM.owl",
     similarity_threshold=0.7,
     max_suggestions=5,
     embedding_model="all-MiniLM-L6-v2",

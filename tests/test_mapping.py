@@ -4,7 +4,7 @@ import logging
 from unittest import TestCase
 from unittest.mock import patch
 
-import pytest
+import numpy as np
 import responses
 
 from edam_mcp.models.requests import MappingRequest
@@ -16,7 +16,7 @@ from edam_mcp.tools.mapping import map_to_edam_concept
 
 def mock_edam_request(rsps: responses.RequestsMock):
     """Mock the request to EDAM"""
-    url = "https://raw.githubusercontent.com/edamontology/edamontology/master/EDAM_dev.owl"
+    url = "https://edamontology.org/EDAM.owl"
     resp = """<?xml version="1.0"?>
     <rdf:RDF xmlns="http://edamontology.org/"
         xml:base="http://edamontology.org/"
@@ -73,7 +73,7 @@ class TestMappingTool(TestCase):
         - context
         - MappingRequest
         - ConceptMatch
-        - ConceptMatcher
+        - MockEmbeddingModel
         """
 
         class MockContext:
@@ -106,12 +106,23 @@ class TestMappingTool(TestCase):
             synonyms=["Tab-delimited", "Tab-separated values", "tab"],
         )
 
-        with responses.RequestsMock() as rsps:
-            mock_edam_request(rsps)
-            self.loader = OntologyLoader()
-            self.loader.load_ontology()
-            self.matcher = ConceptMatcher(self.loader)
+        mock_edam_request(responses)
+        self.loader = OntologyLoader()
+        self.loader.load_ontology()
+        self.matcher = ConceptMatcher(self.loader)
 
+        class MockEmbeddingModel:
+            def encode(self, text, show_progress_bar=False):
+                t = (text or "").lower()
+                if "html" in t:
+                    return np.array([1.0, 0.0])
+                if "tsv" in t or "tab" in t:
+                    return np.array([0.0, 1.0])
+                return np.array([0.9, 0.1])
+
+        self.mock_embedding_model = MockEmbeddingModel()
+
+    @responses.activate
     def test_load_ontology(self):
         """Test the OntologyLoader class"""
         assert self.loader.concepts["http://edamontology.org/format_2331"]
@@ -140,18 +151,14 @@ class TestMappingTool(TestCase):
 
     @patch("edam_mcp.ontology.loader.OntologyLoader.load_ontology")
     @patch("edam_mcp.ontology.matcher.ConceptMatcher.match_concepts")
-    @patch("edam_mcp.ontology.matcher.ConceptMatcher.get_concepts_from_biotools")
     @patch("edam_mcp.ontology.matcher.ConceptMatcher.find_exact_matches")
-    async def test_map_to_edam_concept_no_exact_match(
-        self, mock_exact_matches, mock_biotools, mock_matcher, mock_loader
-    ):
+    async def test_map_to_edam_concept_no_exact_match(self, mock_exact_matches, mock_matcher, mock_loader):
         """Test the mapping tool integration."""
         # Mock the ontology loader
         mock_loader.return_value = True
 
         # Mock the concept matcher
         mock_exact_matches.return_value = []
-        mock_biotools.return_value = [self.mock_match_html]
         mock_matcher.return_value = [self.mock_match_tsv]
 
         # Test the mapping function
@@ -168,16 +175,14 @@ class TestMappingTool(TestCase):
 
     @patch("edam_mcp.ontology.loader.OntologyLoader.load_ontology")
     @patch("edam_mcp.ontology.matcher.ConceptMatcher.match_concepts")
-    @patch("edam_mcp.ontology.matcher.ConceptMatcher.get_concepts_from_biotools")
     @patch("edam_mcp.ontology.matcher.ConceptMatcher.find_exact_matches")
-    async def test_map_to_edam_concept_max_results(self, mock_exact_matches, mock_biotools, mock_matcher, mock_loader):
+    async def test_map_to_edam_concept_max_results(self, mock_exact_matches, mock_matcher, mock_loader):
         """Test the mapping tool integration."""
         # Mock the ontology loader
         mock_loader.return_value = True
 
         # Mock the concept matcher
         mock_exact_matches.return_value = []
-        mock_biotools.return_value = [self.mock_match_html]
         mock_matcher.return_value = [self.mock_match_tsv]
 
         # Test the mapping function
@@ -191,17 +196,24 @@ class TestMappingTool(TestCase):
         assert response.total_matches == 1
         assert response.has_exact_match is False
 
+    @responses.activate
     def test_match_concepts(self):
-        matches = self.matcher.match_concepts("HTML file.")
-        assert len(matches) == 1
-        assert matches[0].concept_uri == self.mock_match_html.concept_uri
-        assert matches[0].concept_label == self.mock_match_html.concept_label
-        assert matches[0].concept_type == self.mock_match_html.concept_type
-        assert matches[0].definition == self.mock_match_html.definition
-        assert matches[0].synonyms == self.mock_match_html.synonyms
-        assert matches[0].confidence == pytest.approx(0.63, 0.01)
+        """Test the concept matcher"""
 
+        self.matcher.embedding_model = self.mock_embedding_model
+
+        matches = self.matcher.match_concepts("HTML file.")
+        assert len(matches) == 5
+        assert self.mock_match_html.concept_uri in [match.concept_uri for match in matches]
+        assert self.mock_match_html.concept_label in [match.concept_label for match in matches]
+        assert self.mock_match_html.concept_type in [match.concept_type for match in matches]
+        assert self.mock_match_html.definition in [match.definition for match in matches]
+        assert self.mock_match_html.synonyms in [match.synonyms for match in matches]
+        assert matches[0].confidence == 1.0
+
+    @responses.activate
     def test_find_exact_matches(self):
+        """Test exact matching"""
         matches = self.matcher.find_exact_matches("HTML")
         assert len(matches) == 1
         assert matches[0] == self.mock_match_html

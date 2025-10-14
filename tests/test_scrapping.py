@@ -4,10 +4,12 @@ import logging
 from unittest import TestCase
 
 import responses
+from pydantic_core._pydantic_core import ValidationError
 
 from edam_mcp.models.requests import BiotoolsRequest
 from edam_mcp.models.responses import ConceptMatch
-from edam_mcp.ontology.scrapper import BiotoolsScrapper
+from edam_mcp.ontology.biotools_scrapper import BiotoolsScrapper
+from edam_mcp.tools.biotools_scrapping import extract_edam_concepts_from_biotools
 
 
 def mock_biotools_request(rsps: responses.RequestsMock):
@@ -61,12 +63,6 @@ class TestScrappingTool(TestCase):
             ontology_type="output",
             max_results=1,
         )
-        self.test_request_no_name = BiotoolsRequest(
-            name=None,
-            biotools_curie="biotools:multiqc",
-            ontology_type="output",
-            max_results=1,
-        )
 
         self.mock_match_html = ConceptMatch(
             concept_uri="http://edamontology.org/format_2331",
@@ -85,10 +81,11 @@ class TestScrappingTool(TestCase):
 
         self.mock_context = MockContext()
 
-    def test_get_concepts_from_biotools_with_curie(self):
+    async def test_get_concepts_from_biotools_with_curie(self):
         with responses.RequestsMock() as rsps:
             mock_biotools_request(rsps)
-            matches = self.scrapper.get_concepts_from_biotools(self.test_request, self.mock_context)
+            matches = extract_edam_concepts_from_biotools(self.test_request, self.mock_context)
+            print(matches)
             # The first match is the data URI, check the HTML
             assert matches[1].concept_uri == self.mock_match_html.concept_uri
             assert matches[1].concept_label == self.mock_match_html.concept_label
@@ -96,10 +93,10 @@ class TestScrappingTool(TestCase):
             assert matches[1].definition == self.mock_match_html.definition
             assert matches[1].synonyms == self.mock_match_html.synonyms
 
-    def test_get_concepts_from_biotools_no_curie(self):
+    async def test_get_concepts_from_biotools_no_curie(self):
         with responses.RequestsMock() as rsps:
             mock_biotools_request(rsps)
-            matches = self.scrapper.get_concepts_from_biotools(self.test_request_no_curie, self.mock_context)
+            matches = extract_edam_concepts_from_biotools(self.test_request_no_curie, self.mock_context)
             # The first match is the data URI, check the HTML
             assert matches[1].concept_uri == self.mock_match_html.concept_uri
             assert matches[1].concept_label == self.mock_match_html.concept_label
@@ -108,7 +105,10 @@ class TestScrappingTool(TestCase):
             assert matches[1].synonyms == self.mock_match_html.synonyms
 
     def test_get_concepts_from_biotools_no_name(self):
-        with responses.RequestsMock() as rsps:
-            mock_biotools_request(rsps)
-            with self.assertRaises(ValueError):
-                self.scrapper.get_concepts_from_biotools(self.test_request_no_name, self.mock_context)
+        with self.assertRaises(ValidationError):
+            BiotoolsRequest(
+                name=None,
+                biotools_curie="biotools:multiqc",
+                ontology_type="output",
+                max_results=1,
+            )

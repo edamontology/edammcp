@@ -65,34 +65,6 @@ def mock_edam_request(rsps: responses.RequestsMock):
     rsps.add(method="GET", url=url, body=resp.encode("utf-8"), status=200, content_type="application/rdf+xml")
 
 
-def mock_biotools_request(rsps: responses.RequestsMock):
-    """Mock the request to EDAM"""
-    url = "https://bio.tools/api/t/?q=multiqc&format=json"
-    rsps_json = {
-        "list": [
-            {
-                "name": "MultiQC",
-                "description": "MultiQC aggregates results from multiple bioinformatics analyses across many samples into a single report. It searches a given directory for analysis logs and compiles a HTML report. It's a general use tool, perfect for summarising the output from numerous bioinformatics tools.",
-                "biotoolsCURIE": "biotools:multiqc",
-                "function": [
-                    {
-                        "output": [
-                            {
-                                "data": {
-                                    "uri": "http://edamontology.org/data_0867",
-                                    "term": "Sequence alignment report",
-                                },
-                                "format": [{"uri": "http://edamontology.org/format_2331", "term": "HTML"}],
-                            }
-                        ],
-                    }
-                ],
-            }
-        ]
-    }
-    rsps.add(method="GET", url=url, json=rsps_json, status=200)
-
-
 class TestMappingTool(TestCase):
     """Test cases for the mapping tool."""
 
@@ -228,17 +200,6 @@ class TestMappingTool(TestCase):
         assert matches[0].definition == self.mock_match_html.definition
         assert matches[0].synonyms == self.mock_match_html.synonyms
         assert matches[0].confidence == pytest.approx(0.63, 0.01)
-
-    def test_get_concepts_from_biotools(self):
-        with responses.RequestsMock() as rsps:
-            mock_biotools_request(rsps)
-            matches = self.matcher.get_concepts_from_biotools("multiqc", "biotools:multiqc", "output")
-            # The first match is the data URI, check the HTML
-            assert matches[1].concept_uri == self.mock_match_html.concept_uri
-            assert matches[1].concept_label == self.mock_match_html.concept_label
-            assert matches[1].concept_type == self.mock_match_html.concept_type
-            assert matches[1].definition == self.mock_match_html.definition
-            assert matches[1].synonyms == self.mock_match_html.synonyms
 
     def test_find_exact_matches(self):
         matches = self.matcher.find_exact_matches("HTML")

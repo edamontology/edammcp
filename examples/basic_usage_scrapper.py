@@ -23,26 +23,34 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-async def example_mapping():
-    """Example of mapping descriptions to EDAM concepts."""
-    print("=== EDAM Concept Mapping Example ===\n")
+async def example_scrapping():
+    """Example of scrapping EDAM concepts from bio.tools."""
+    print("=== EDAM Concept Scrapping Example ===\n")
 
-    # Example descriptions to map
-    descriptions = [
-        "sequence alignment tool",
-        "FASTQ file format",
-        "gene expression analysis",
-        "protein structure prediction",
-        "metabolomics data processing",
+    biotools_tests = [
+        {
+            "description": "sequence alignment tool",
+            "name": "clustalo",
+            "biotools_curie": "biotools:clustalo",
+            "ontology_type": "operation",
+        },
+        {
+            "description": "Sequence alignment report in html format",
+            "name": "multiqc",
+            "biotools_curie": None,
+            "ontology_type": "output",
+        },
     ]
 
-    for description in descriptions:
-        print(f"Mapping: {description}")
+    for test in biotools_tests:
+        print(f"Mapping with bio.tools: {test.get('name')}")
 
         try:
             response = await map_description_to_concepts(
-                description=description,
-                context="bioinformatics tool",
+                description=test.get("description"),
+                name=test.get("name"),
+                biotools_curie=test.get("biotools_curie"),
+                ontology_type=test.get("ontology_type"),
                 max_results=3,
                 min_confidence=0.5,
             )
@@ -62,11 +70,11 @@ async def example_mapping():
 
 async def main():
     """Run the examples."""
-    print("EDAM MCP Server - Basic Usage Examples - Mapping")
+    print("EDAM MCP Server - Basic Usage Examples - Scrapping")
     print("=" * 50)
 
     # Run mapping example
-    await example_mapping()
+    await example_scrapping()
 
     print("Examples completed!")
 

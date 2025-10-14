@@ -12,7 +12,19 @@ class MappingRequest(BaseModel):
         min_length=1,
         max_length=10000,
     )
-    name: str | None = Field(
+    context: str | None = Field(
+        None,
+        description="Additional context about the description (e.g., tool name, domain)",
+        max_length=2000,
+    )
+    max_results: int | None = Field(5, ge=1, le=20, description="Maximum number of concept matches to return")
+    min_confidence: float | None = Field(0.5, ge=0.0, le=1.0, description="Minimum confidence threshold for matches")
+
+
+class BiotoolsRequest(BaseModel):
+    """Request model for scrapping EDAM concepts from bio.tools."""
+
+    name: str = Field(
         None,
         description="The name of the tool being processed.",
         min_length=1,
@@ -24,18 +36,12 @@ class MappingRequest(BaseModel):
         min_length=1,
         max_length=20,
     )
-    context: str | None = Field(
-        None,
-        description="Additional context about the description (e.g., tool name, domain)",
-        max_length=2000,
-    )
     ontology_type: str | None = Field(
         None,
         description="What ontology terms to retrieve from bio.tools. Can be one of [operation, input, output, topic]",
         pattern="^(operation|input|output|topic)$",
     )
     max_results: int | None = Field(5, ge=1, le=20, description="Maximum number of concept matches to return")
-    min_confidence: float | None = Field(0.5, ge=0.0, le=1.0, description="Minimum confidence threshold for matches")
 
 
 class SuggestionRequest(BaseModel):

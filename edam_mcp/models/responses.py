@@ -26,6 +26,13 @@ class MappingResponse(BaseModel):
     confidence_threshold: float = Field(..., description="Confidence threshold used for filtering")
 
 
+class BiotoolsResponse(BaseModel):
+    """Response model for bio.tools concept results."""
+
+    matches: list[ConceptMatch] = Field(..., description="List of obtained concepts")
+    total_matches: int = Field(..., description="Total number of concepts found")
+
+
 class SuggestedConcept(BaseModel):
     """Represents a suggested new EDAM concept."""
 

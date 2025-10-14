@@ -48,20 +48,9 @@ async def map_to_edam_concept(request: MappingRequest, context: Context) -> Mapp
                 confidence_threshold=request.min_confidence,
             )
 
-        matches = []
-        # Extract matches from bio.tools
-        if request.name:
-            context.log.info("Looking for ontology terms on bio.tools...")
-            matches = concept_matcher.get_concepts_from_biotools(
-                tool_name=request.name,
-                tool_curie=request.biotools_curie,
-                ontology_type=request.ontology_type,
-            )
-            context.log.info(f"Found {len(matches)} terms on bio.tools.")
-
         # Perform semantic matching
         context.log.info("Performing semantic matching...")
-        matches += concept_matcher.match_concepts(
+        matches = concept_matcher.match_concepts(
             description=request.description,
             context=request.context,
             max_results=request.max_results,
@@ -72,7 +61,7 @@ async def map_to_edam_concept(request: MappingRequest, context: Context) -> Mapp
 
         return MappingResponse(
             matches=matches[: request.max_results],
-            total_matches=len(matches[: request.max_results]),
+            total_matches=len(matches),
             has_exact_match=False,
             confidence_threshold=request.min_confidence,
         )
@@ -85,10 +74,7 @@ async def map_to_edam_concept(request: MappingRequest, context: Context) -> Mapp
 # Alternative function signature for direct use
 async def map_description_to_concepts(
     description: str,
-    name: str | None = None,
-    biotools_curie: str | None = None,
     context: str | None = None,
-    ontology_type: str | None = None,
     max_results: int = 5,
     min_confidence: float = 0.5,
 ) -> MappingResponse:
@@ -105,10 +91,7 @@ async def map_description_to_concepts(
     """
     request = MappingRequest(
         description=description,
-        name=name,
-        biotools_curie=biotools_curie,
         context=context,
-        ontology_type=ontology_type,
         max_results=max_results,
         min_confidence=min_confidence,
     )

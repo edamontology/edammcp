@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Simple test script to verify the basic structure without heavy dependencies."""
 
-import importlib.util
+import importlib
 import sys
 from pathlib import Path
 
@@ -21,19 +21,30 @@ def test_basic_imports():
         print("✅ Config imported successfully")
         print(f"   Similarity threshold: {settings.similarity_threshold}")
 
-        # Test models
-        if importlib.util.find_spec("edam_mcp.models.requests.SuggestionRequest") is None:
-            print("Module 'edam_mcp.models.requests.SuggestionRequest' is not available")
+        requests_spec = importlib.util.find_spec("edam_mcp.models.requests")
+        responses_spec = importlib.util.find_spec("edam_mcp.models.responses")
+
+        if requests_spec is None:
+            print("Module 'edam_mcp.models.requests' is not available")
             return False
-        if (
-            importlib.util.find_spec("edam_mcp.models.responses.ConceptMatch") is None
-            or importlib.util.find_spec("edam_mcp.models.responses.MappingResponse") is None
-            or importlib.util.find_spec("edam_mcp.models.responses.SuggestionResponse") is None
-        ):
+        if responses_spec is None:
             print("Module 'edam_mcp.models.responses' is not available")
             return False
 
-        from edam_mcp.models.requests import MappingRequest
+        requests_mod = importlib.import_module("edam_mcp.models.requests")
+        responses_mod = importlib.import_module("edam_mcp.models.responses")
+
+        for cls_name in ("MappingRequest", "SuggestionRequest"):
+            if not hasattr(requests_mod, cls_name):
+                print(f"Class '{cls_name}' not found in edam_mcp.models.requests")
+                return False
+
+        for cls_name in ("ConceptMatch", "MappingResponse", "SuggestionResponse"):
+            if not hasattr(responses_mod, cls_name):
+                print(f"Class '{cls_name}' not found in edam_mcp.models.responses")
+                return False
+
+        mapping_request = getattr(requests_mod, "MappingRequest")
 
         print("✅ Request models imported successfully")
 
@@ -50,7 +61,7 @@ def test_basic_imports():
         print(f"✅ Text processing works: '{test_text}' -> '{processed}'")
 
         # Test model creation
-        _ = MappingRequest(
+        _ = mapping_request(
             description="test description",
             context="test context",
             max_results=5,

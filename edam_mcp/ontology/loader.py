@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 # EDAM namespaces
 EDAM = Namespace("http://edamontology.org/")
-OWL = Namespace("http://www.w3.org/2002/07/owl#")
 OBOINOWL = Namespace("http://www.geneontology.org/formats/oboInOwl#")
 
 
@@ -99,9 +98,9 @@ class OntologyLoader:
             return {
                 "uri": str(concept_uri),
                 "label": label,
-                "definition": self._get_literal_value(concept_uri, SKOS.definition),
-                "synonyms": self._get_literal_values(concept_uri, SKOS.altLabel),
-                "type": self._determine_concept_type(str(concept_uri)),
+                "definition": definition,
+                "synonyms": synonyms,
+                "type": concept_type,
                 "parents": self._get_parent_concepts(concept_uri),
                 "children": self._get_child_concepts(concept_uri),
             }

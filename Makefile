@@ -43,8 +43,9 @@ check-all: ## Run all checks (format, lint, type-check, test)
 run: ## Run the MCP server
 	uv run python -m edam_mcp.main
 
-example: ## Run the basic usage example
-	uv run python examples/basic_usage.py
+example: ## Run the basic usage examples for the mapper and the suggester functions
+	uv run python examples/basic_usage_mapper.py
+	uv run python examples/basic_usage_suggester.py
 
 docs-build: ## Build documentation
 	uv run mkdocs build

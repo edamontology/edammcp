@@ -64,7 +64,8 @@ except ImportError as e:
 
     print("\n🎉 Development installation completed!")
     print("\nYou can now run:")
-    print("  uv run python examples/basic_usage.py")
+    print("  uv run python examples/basic_usage_mapper.py")
+    print("  uv run python examples/basic_usage_suggester.py")
     print("  uv run python -m edam_mcp.main")
     print("  make example")
     print("  make run")

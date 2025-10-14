@@ -1,6 +1,5 @@
 """Main entry point for the EDAM MCP server."""
 
-import asyncio
 import logging
 import sys
 
@@ -42,7 +41,7 @@ def create_server() -> FastMCP:
     return mcp
 
 
-async def main() -> None:
+def main() -> None:
     """Main entry point for running the server."""
     try:
         # Create server
@@ -58,10 +57,5 @@ async def main() -> None:
         sys.exit(1)
 
 
-def run_server() -> None:
-    """Run the server synchronously."""
-    asyncio.run(main())
-
-
 if __name__ == "__main__":
-    run_server()
+    main()

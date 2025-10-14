@@ -139,7 +139,12 @@ Expected output:
 
 ```bash
 # Test with ML models (downloads on first run)
-uv run python examples/basic_usage.py
+
+# Run the mapper
+uv run python examples/basic_usage_mapper.py
+
+# Run the suggester
+uv run python examples/basic_usage_suggester.py
 ```
 
 Expected output:

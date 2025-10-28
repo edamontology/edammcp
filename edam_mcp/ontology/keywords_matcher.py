@@ -1,26 +1,15 @@
 """Keyword matching functionality for EDAM ontology terms."""
 
 import logging
-from dataclasses import dataclass
 
 import numpy as np
 
 from ..config import settings
+from ..models.responses import KeywordMatch
 from ..utils.text_processing import preprocess_text
 from .loader import OntologyLoader
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class Match:
-    """Represents a keyword match result."""
-
-    term_id: str
-    label: str
-    score: float
-    match_type: str
-    matched_keywords: list[str]
 
 
 class KeywordMatcher:
@@ -114,14 +103,14 @@ class KeywordMatcher:
         # Compute dot product
         return float(np.dot(vec1_norm, vec2_norm))
 
-    def match_by_substring(self, keywords: list[str]) -> list[Match]:
+    def match_by_substring(self, keywords: list[str]) -> list[KeywordMatch]:
         """Match keywords using substring search in term descriptions.
 
         Args:
             keywords: List of keywords to match.
 
         Returns:
-            List of Match objects sorted by score (match count).
+            List of KeywordMatch objects sorted by score (match count).
         """
         logger.info("Matching keywords by substring: %s", keywords)
         
@@ -151,22 +140,28 @@ class KeywordMatcher:
             if match_count > 0:
                 term_matches[uri] = (match_count, matched_keywords)
         
-        # Build Match objects
+        # Build KeywordMatch objects
         matches = []
+        max_possible_count = len(keywords)  # Maximum matches possible
         for uri, (match_count, matched_keywords) in term_matches.items():
             concept = self.ontology_loader.concepts.get(uri)
             if concept:
-                match = Match(
-                    term_id=uri,
-                    label=concept["label"],
-                    score=float(match_count),
+                # Normalize match count to 0-1 range
+                normalized_confidence = float(match_count) / max_possible_count if max_possible_count > 0 else 0.0
+                match = KeywordMatch(
+                    concept_uri=uri,
+                    concept_label=concept["label"],
+                    confidence=normalized_confidence,
+                    concept_type="",  # Will be set based on URI structure if needed
+                    definition=concept.get("definition"),
+                    synonyms=concept.get("synonyms", []),
                     match_type="substring",
                     matched_keywords=matched_keywords
                 )
                 matches.append(match)
         
         # Sort by score (match count) in descending order
-        matches.sort(key=lambda m: m.score, reverse=True)
+        matches.sort(key=lambda m: m.confidence, reverse=True)
         
         logger.info("Found %d matches using substring search", len(matches))
         return matches
@@ -175,7 +170,7 @@ class KeywordMatcher:
         self, 
         keywords: list[str], 
         threshold: float = 0.3
-    ) -> list[Match]:
+    ) -> list[KeywordMatch]:
         """Match keywords using separate embeddings for each keyword.
         
         Creates a separate embedding for each keyword and computes similarity
@@ -187,7 +182,7 @@ class KeywordMatcher:
             threshold: Minimum similarity score threshold (default: 0.3).
 
         Returns:
-            List of Match objects sorted by score (descending).
+            List of KeywordMatch objects sorted by score (descending).
         """
         logger.info("Matching keywords by list embeddings: %s (threshold: %.2f)", keywords, threshold)
         
@@ -235,22 +230,27 @@ class KeywordMatcher:
             if max_similarity >= threshold:
                 term_matches[uri] = (max_similarity, best_keyword)
         
-        # Build Match objects
+        # Build KeywordMatch objects
         matches = []
         for uri, (score, matched_keyword) in term_matches.items():
             concept = self.ontology_loader.concepts.get(uri)
             if concept:
-                match = Match(
-                    term_id=uri,
-                    label=concept["label"],
-                    score=score,
+                # Clamp score to [0, 1] range to handle floating point precision issues
+                clamped_score = max(0.0, min(1.0, score))
+                match = KeywordMatch(
+                    concept_uri=uri,
+                    concept_label=concept["label"],
+                    confidence=clamped_score,
+                    concept_type="",  # Will be set based on URI structure if needed
+                    definition=concept.get("definition"),
+                    synonyms=concept.get("synonyms", []),
                     match_type="list_embeddings",
                     matched_keywords=[matched_keyword]
                 )
                 matches.append(match)
         
         # Sort by score in descending order
-        matches.sort(key=lambda m: m.score, reverse=True)
+        matches.sort(key=lambda m: m.confidence, reverse=True)
         
         logger.info("Found %d matches using list embeddings", len(matches))
         return matches
@@ -259,7 +259,7 @@ class KeywordMatcher:
         self, 
         keywords: list[str], 
         threshold: float = 0.3
-    ) -> list[Match]:
+    ) -> list[KeywordMatch]:
         """Match keywords using a single embedding from joined keywords.
         
         Joins all keywords into a single string and creates one embedding
@@ -271,7 +271,7 @@ class KeywordMatcher:
             threshold: Minimum similarity score threshold (default: 0.3).
 
         Returns:
-            List of Match objects sorted by score (descending).
+            List of KeywordMatch objects sorted by score (descending).
         """
         logger.info("Matching keywords by joined embedding: %s (threshold: %.2f)", keywords, threshold)
         
@@ -311,22 +311,27 @@ class KeywordMatcher:
             if similarity >= threshold:
                 term_matches[uri] = similarity
         
-        # Build Match objects
+        # Build KeywordMatch objects
         matches = []
         for uri, score in term_matches.items():
             concept = self.ontology_loader.concepts.get(uri)
             if concept:
-                match = Match(
-                    term_id=uri,
-                    label=concept["label"],
-                    score=score,
+                # Clamp score to [0, 1] range to handle floating point precision issues
+                clamped_score = max(0.0, min(1.0, score))
+                match = KeywordMatch(
+                    concept_uri=uri,
+                    concept_label=concept["label"],
+                    confidence=clamped_score,
+                    concept_type="",  # Will be set based on URI structure if needed
+                    definition=concept.get("definition"),
+                    synonyms=concept.get("synonyms", []),
                     match_type="joined_embedding",
                     matched_keywords=keywords  # All keywords contributed to the match
                 )
                 matches.append(match)
         
         # Sort by score in descending order
-        matches.sort(key=lambda m: m.score, reverse=True)
+        matches.sort(key=lambda m: m.confidence, reverse=True)
         
         logger.info("Found %d matches using joined embedding", len(matches))
         return matches

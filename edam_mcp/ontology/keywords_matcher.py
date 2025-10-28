@@ -97,6 +97,23 @@ class KeywordMatcher:
 
         logger.info("Built embeddings for %d terms", len(self.term_embeddings))
 
+    def _cosine_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
+        """Calculate cosine similarity between two vectors.
+        
+        Args:
+            vec1: First embedding vector.
+            vec2: Second embedding vector.
+            
+        Returns:
+            Cosine similarity score between -1 and 1.
+        """
+        # Normalize vectors
+        vec1_norm = vec1 / (np.linalg.norm(vec1) + 1e-10)
+        vec2_norm = vec2 / (np.linalg.norm(vec2) + 1e-10)
+        
+        # Compute dot product
+        return float(np.dot(vec1_norm, vec2_norm))
+
     def match_by_substring(self, keywords: list[str]) -> list[Match]:
         """Match keywords using substring search in term descriptions.
 
@@ -160,16 +177,83 @@ class KeywordMatcher:
         threshold: float = 0.3
     ) -> list[Match]:
         """Match keywords using separate embeddings for each keyword.
+        
+        Creates a separate embedding for each keyword and computes similarity
+        with term embeddings. Uses max aggregation to find the best match
+        for each term.
 
         Args:
             keywords: List of keywords to match.
-            threshold: Minimum similarity score threshold.
+            threshold: Minimum similarity score threshold (default: 0.3).
 
         Returns:
-            List of Match objects sorted by score.
+            List of Match objects sorted by score (descending).
         """
-        # To be implemented
-        raise NotImplementedError("match_by_list_embeddings not yet implemented")
+        logger.info("Matching keywords by list embeddings: %s (threshold: %.2f)", keywords, threshold)
+        
+        # Handle empty keyword list
+        if not keywords:
+            logger.warning("Empty keyword list provided")
+            return []
+        
+        # Ensure embeddings are prepared
+        if not self.term_embeddings:
+            logger.info("Embeddings not yet prepared, initializing...")
+            self._prepare_embeddings()
+        
+        # Check if embedding model is available
+        if self.embedding_model is None:
+            logger.error("Embedding model not available, cannot perform semantic matching")
+            return []
+        
+        # Create separate embeddings for each keyword
+        logger.debug("Creating embeddings for %d keywords", len(keywords))
+        keyword_embeddings = self.embedding_model.encode(
+            keywords,
+            show_progress_bar=False
+        )
+        
+        # Dictionary to store term URI -> (max_score, best_matched_keyword)
+        term_matches: dict[str, tuple[float, str]] = {}
+        
+        # For each term, find the maximum similarity across all keyword embeddings
+        for uri, term_embedding in self.term_embeddings.items():
+            max_similarity = -1.0
+            best_keyword = ""
+            
+            # Compare term embedding with each keyword embedding
+            for keyword, keyword_embedding in zip(keywords, keyword_embeddings):
+                # Compute cosine similarity
+                similarity = self._cosine_similarity(term_embedding, keyword_embedding)
+                
+                # Track the maximum similarity
+                if similarity > max_similarity:
+                    max_similarity = similarity
+                    best_keyword = keyword
+            
+            # Store if similarity meets threshold
+            if max_similarity >= threshold:
+                term_matches[uri] = (max_similarity, best_keyword)
+        
+        # Build Match objects
+        matches = []
+        for uri, (score, matched_keyword) in term_matches.items():
+            concept = self.ontology_loader.concepts.get(uri)
+            if concept:
+                match = Match(
+                    term_id=uri,
+                    label=concept["label"],
+                    score=score,
+                    match_type="list_embeddings",
+                    matched_keywords=[matched_keyword]
+                )
+                matches.append(match)
+        
+        # Sort by score in descending order
+        matches.sort(key=lambda m: m.score, reverse=True)
+        
+        logger.info("Found %d matches using list embeddings", len(matches))
+        return matches
 
     def match_by_joined_embedding(
         self, 

@@ -261,13 +261,72 @@ class KeywordMatcher:
         threshold: float = 0.3
     ) -> list[Match]:
         """Match keywords using a single embedding from joined keywords.
+        
+        Joins all keywords into a single string and creates one embedding
+        for the entire query. This approach captures the semantic meaning
+        of keywords as a phrase or context.
 
         Args:
             keywords: List of keywords to match.
-            threshold: Minimum similarity score threshold.
+            threshold: Minimum similarity score threshold (default: 0.3).
 
         Returns:
-            List of Match objects sorted by score.
+            List of Match objects sorted by score (descending).
         """
-        # To be implemented
-        raise NotImplementedError("match_by_joined_embedding not yet implemented")
+        logger.info("Matching keywords by joined embedding: %s (threshold: %.2f)", keywords, threshold)
+        
+        # Handle empty keyword list
+        if not keywords:
+            logger.warning("Empty keyword list provided")
+            return []
+        
+        # Ensure embeddings are prepared
+        if not self.term_embeddings:
+            logger.info("Embeddings not yet prepared, initializing...")
+            self._prepare_embeddings()
+        
+        # Check if embedding model is available
+        if self.embedding_model is None:
+            logger.error("Embedding model not available, cannot perform semantic matching")
+            return []
+        
+        # Join keywords into a single string
+        joined_keywords = " ".join(keywords)
+        logger.debug("Creating embedding for joined query: '%s'", joined_keywords)
+        
+        # Create single embedding for the joined keywords
+        query_embedding = self.embedding_model.encode(
+            joined_keywords,
+            show_progress_bar=False
+        )
+        
+        # Dictionary to store term URI -> similarity_score
+        term_matches: dict[str, float] = {}
+        
+        # Compute cosine similarity with all term embeddings
+        for uri, term_embedding in self.term_embeddings.items():
+            similarity = self._cosine_similarity(term_embedding, query_embedding)
+            
+            # Store if similarity meets threshold
+            if similarity >= threshold:
+                term_matches[uri] = similarity
+        
+        # Build Match objects
+        matches = []
+        for uri, score in term_matches.items():
+            concept = self.ontology_loader.concepts.get(uri)
+            if concept:
+                match = Match(
+                    term_id=uri,
+                    label=concept["label"],
+                    score=score,
+                    match_type="joined_embedding",
+                    matched_keywords=keywords  # All keywords contributed to the match
+                )
+                matches.append(match)
+        
+        # Sort by score in descending order
+        matches.sort(key=lambda m: m.score, reverse=True)
+        
+        logger.info("Found %d matches using joined embedding", len(matches))
+        return matches

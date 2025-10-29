@@ -47,3 +47,33 @@ class SuggestionRequest(BaseModel):
         description="Rationale for why this concept should be added",
         max_length=2000,
     )
+
+
+class KeywordMappingRequest(BaseModel):
+    """Request model for mapping keywords to EDAM concepts."""
+
+    keywords: list[str] = Field(
+        ...,
+        description="List of keywords to match against EDAM ontology terms",
+        min_length=1,
+    )
+
+    match_mode: str = Field(
+        ...,
+        description="Matching algorithm: 'substring', 'list_embeddings', or 'joined_embedding'",
+        pattern="^(substring|list_embeddings|joined_embedding)$",
+    )
+
+    threshold: float = Field(
+        0.3,
+        ge=0.0,
+        le=1.0,
+        description="Similarity threshold for embedding-based matching (default: 0.3)",
+    )
+
+    max_results: int | None = Field(
+        None,
+        ge=1,
+        le=100,
+        description="Maximum number of results to return (optional)",
+    )

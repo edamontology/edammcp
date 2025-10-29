@@ -70,3 +70,15 @@ class SuggestionResponse(BaseModel):
     mapping_attempted: bool = Field(..., description="Whether concept mapping was attempted first")
 
     mapping_failed_reason: str | None = Field(None, description="Reason why mapping failed (if applicable)")
+
+
+class KeywordMappingResponse(BaseModel):
+    """Response model for keyword mapping results."""
+
+    matches: list[KeywordMatch] = Field(..., description="List of matched concepts ordered by confidence")
+
+    total_matches: int = Field(..., description="Total number of matches found")
+
+    match_mode: str = Field(..., description="Matching algorithm used (substring, list_embeddings, or joined_embedding)")
+
+    threshold: float | None = Field(None, description="Similarity threshold used for filtering (if applicable)")

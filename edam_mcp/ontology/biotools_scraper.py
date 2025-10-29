@@ -1,12 +1,20 @@
 """Concept matching functionality for mapping descriptions to EDAM concepts."""
 
 import logging
+from enum import StrEnum
 
 import requests
 
 from ..models.responses import BioToolsInfo, ConceptMatch
 
 logger = logging.getLogger(__name__)
+
+
+class OntologyTypes(str, StrEnum):
+    OPERATION = "operation"
+    TOPIC = "topic"
+    INPUT = "input"
+    OUTPUT = "output"
 
 
 class BiotoolsScraper:
@@ -32,7 +40,7 @@ class BiotoolsScraper:
         self,
         tool_name: str | None,
         tool_curie: str | None = None,
-        ontology_type: str = "operation",
+        ontology_type: str = OntologyTypes.OPERATION,
     ) -> list[ConceptMatch]:
         """Get EDAM ontology concepts from bio.tools.
 
@@ -44,6 +52,9 @@ class BiotoolsScraper:
         Returns:
             List of concept matches.
         """
+        if not ontology_type in OntologyTypes:
+            raise ValueError("Not a valid ontology type")
+
         if not tool_name and not tool_curie:
             raise ValueError("Either tool_name or tool_curie must be provided")
 
@@ -56,7 +67,7 @@ class BiotoolsScraper:
             return []
 
         matches = []
-        if ontology_type in ["operation", "topic"]:
+        if ontology_type in [OntologyTypes.OPERATION, OntologyTypes.TOPIC]:
             for term in ontology_terms:
                 concept = self.ontology_loader.get_concept(term.get("uri"))
                 match = ConceptMatch(
@@ -68,7 +79,7 @@ class BiotoolsScraper:
                     synonyms=concept["synonyms"],
                 )
                 matches.append(match)
-        elif ontology_type in ["input", "output"]:
+        elif ontology_type in [OntologyTypes.INPUT, OntologyTypes.OUTPUT]:
             for io in ontology_terms:
                 data_term = io.get("data")
                 format_terms = io.get("format")
@@ -143,9 +154,9 @@ class BiotoolsScraper:
         inputs = []
         outputs = []
         for function in tool_functions:
-            operations += function.get("operation", "")
-            inputs += function.get("input", "")
-            outputs += function.get("output", "")
+            operations += function.get(OntologyTypes.OPERATION, "")
+            inputs += function.get(OntologyTypes.INPUT, "")
+            outputs += function.get(OntologyTypes.OUTPUT, "")
 
         tool_info = BioToolsInfo(
             name=selected_tool.get("name", ""),
@@ -154,7 +165,7 @@ class BiotoolsScraper:
             operation=operations,
             input=inputs,
             output=outputs,
-            topic=selected_tool.get("topic", []),
+            topic=selected_tool.get(OntologyTypes.TOPIC, []),
         )
 
         return tool_info

@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from edam_mcp.models.requests import KeywordMappingRequest
-from edam_mcp.models.responses import KeywordMatch, KeywordMappingResponse
+from edam_mcp.models.responses import KeywordMappingResponse, KeywordMatch
 from edam_mcp.tools.keywords_mapper import map_keywords_to_edam_concepts
 
 
@@ -125,9 +125,7 @@ class TestKeywordMapperTool:
     @pytest.mark.asyncio
     @patch("edam_mcp.tools.keywords_mapper.OntologyLoader")
     @patch("edam_mcp.tools.keywords_mapper.KeywordMatcher")
-    async def test_keyword_mapper_tool_substring_mode(
-        self, mock_matcher, mock_loader
-    ):
+    async def test_keyword_mapper_tool_substring_mode(self, mock_matcher, mock_loader):
         """Test the keyword mapper tool with substring mode."""
         # Mock context
         mock_context = Mock()
@@ -158,16 +156,12 @@ class TestKeywordMapperTool:
         assert response.total_matches == 0
         assert response.match_mode == "substring"
         assert response.threshold is None  # Threshold not used for substring mode
-        mock_matcher_instance.match_by_substring.assert_called_once_with(
-            ["alignment", "sequence"]
-        )
+        mock_matcher_instance.match_by_substring.assert_called_once_with(["alignment", "sequence"])
 
     @pytest.mark.asyncio
     @patch("edam_mcp.tools.keywords_mapper.OntologyLoader")
     @patch("edam_mcp.tools.keywords_mapper.KeywordMatcher")
-    async def test_keyword_mapper_tool_list_embeddings_mode(
-        self, mock_matcher, mock_loader
-    ):
+    async def test_keyword_mapper_tool_list_embeddings_mode(self, mock_matcher, mock_loader):
         """Test the keyword mapper tool with list_embeddings mode."""
         # Mock context
         mock_context = Mock()
@@ -209,16 +203,12 @@ class TestKeywordMapperTool:
         assert response.total_matches == 1
         assert response.match_mode == "list_embeddings"
         assert response.threshold == 0.4
-        mock_matcher_instance.match_by_list_embeddings.assert_called_once_with(
-            ["alignment", "protein"], threshold=0.4
-        )
+        mock_matcher_instance.match_by_list_embeddings.assert_called_once_with(["alignment", "protein"], threshold=0.4)
 
     @pytest.mark.asyncio
     @patch("edam_mcp.tools.keywords_mapper.OntologyLoader")
     @patch("edam_mcp.tools.keywords_mapper.KeywordMatcher")
-    async def test_keyword_mapper_tool_joined_embedding_mode(
-        self, mock_matcher, mock_loader
-    ):
+    async def test_keyword_mapper_tool_joined_embedding_mode(self, mock_matcher, mock_loader):
         """Test the keyword mapper tool with joined_embedding mode."""
         # Mock context
         mock_context = Mock()
@@ -346,9 +336,7 @@ class TestKeywordMapperTool:
         request.match_mode = "invalid_mode"
 
         # Test that ValueError is raised
-        with pytest.raises(
-            ValueError, match="Invalid match_mode: invalid_mode"
-        ):
+        with pytest.raises(ValueError, match="Invalid match_mode: invalid_mode"):
             await map_keywords_to_edam_concepts(request, mock_context)
 
     @pytest.mark.asyncio

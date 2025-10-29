@@ -25,7 +25,9 @@ class ConceptMatch(BaseModel):
 class KeywordMatch(ConceptMatch):
     """Represents a keyword match result, extending ConceptMatch with matching metadata."""
 
-    match_type: str = Field(..., description="Type of matching algorithm used (e.g., substring, list_embeddings, joined_embedding)")
+    match_type: str = Field(
+        ..., description="Type of matching algorithm used (e.g., substring, list_embeddings, joined_embedding)"
+    )
 
     matched_keywords: list[str] = Field(..., description="List of keywords that matched this concept")
 
@@ -79,6 +81,8 @@ class KeywordMappingResponse(BaseModel):
 
     total_matches: int = Field(..., description="Total number of matches found")
 
-    match_mode: str = Field(..., description="Matching algorithm used (substring, list_embeddings, or joined_embedding)")
+    match_mode: str = Field(
+        ..., description="Matching algorithm used (substring, list_embeddings, or joined_embedding)"
+    )
 
     threshold: float | None = Field(None, description="Similarity threshold used for filtering (if applicable)")

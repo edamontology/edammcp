@@ -12,9 +12,7 @@ from ..ontology.loader import OntologyLoader
 logger = logging.getLogger(__name__)
 
 
-async def map_keywords_to_edam_concepts(
-    request: KeywordMappingRequest, context: Context
-) -> KeywordMappingResponse:
+async def map_keywords_to_edam_concepts(request: KeywordMappingRequest, context: Context) -> KeywordMappingResponse:
     """Map keywords to EDAM concepts using various matching strategies.
 
     This tool takes a list of keywords and finds matching concepts in the EDAM
@@ -36,9 +34,7 @@ async def map_keywords_to_edam_concepts(
     """
     try:
         # Log the request
-        context.log.info(
-            f"Mapping {len(request.keywords)} keywords using {request.match_mode} mode"
-        )
+        context.log.info(f"Mapping {len(request.keywords)} keywords using {request.match_mode} mode")
         context.log.debug(f"Keywords: {request.keywords}")
 
         # Initialize ontology components
@@ -56,20 +52,12 @@ async def map_keywords_to_edam_concepts(
             matches = keyword_matcher.match_by_substring(request.keywords)
 
         elif request.match_mode == "list_embeddings":
-            context.log.info(
-                f"Performing list embeddings matching (threshold: {request.threshold})..."
-            )
-            matches = keyword_matcher.match_by_list_embeddings(
-                request.keywords, threshold=request.threshold
-            )
+            context.log.info(f"Performing list embeddings matching (threshold: {request.threshold})...")
+            matches = keyword_matcher.match_by_list_embeddings(request.keywords, threshold=request.threshold)
 
         elif request.match_mode == "joined_embedding":
-            context.log.info(
-                f"Performing joined embedding matching (threshold: {request.threshold})..."
-            )
-            matches = keyword_matcher.match_by_joined_embedding(
-                request.keywords, threshold=request.threshold
-            )
+            context.log.info(f"Performing joined embedding matching (threshold: {request.threshold})...")
+            matches = keyword_matcher.match_by_joined_embedding(request.keywords, threshold=request.threshold)
 
         else:
             raise ValueError(
@@ -85,11 +73,7 @@ async def map_keywords_to_edam_concepts(
         context.log.info(f"Found {len(matches)} total matches")
 
         # Determine if threshold applies (only for embedding modes)
-        threshold_used = (
-            request.threshold
-            if request.match_mode in ["list_embeddings", "joined_embedding"]
-            else None
-        )
+        threshold_used = request.threshold if request.match_mode in ["list_embeddings", "joined_embedding"] else None
 
         return KeywordMappingResponse(
             matches=matches,

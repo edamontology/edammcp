@@ -22,7 +22,7 @@ class MappingRequest(BaseModel):
 
 
 class BiotoolsRequest(BaseModel):
-    """Request model for scrapping EDAM concepts from bio.tools."""
+    """Request model for scraping EDAM concepts from bio.tools."""
 
     name: str = Field(
         None,

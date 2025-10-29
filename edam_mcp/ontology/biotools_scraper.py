@@ -9,11 +9,11 @@ from ..models.responses import BioToolsInfo, ConceptMatch
 logger = logging.getLogger(__name__)
 
 
-class BiotoolsScrapper:
+class BiotoolsScraper:
     """Obtains EDAM concepts form a tool in bio.tools."""
 
     def __init__(self, ontology_loader=None):
-        """Initialize the bio.tools scrapper.
+        """Initialize the bio.tools scraper.
 
         Args:
             ontology_loader: Optional ontology loader instance. If not provided, a new one will be created.

@@ -23,9 +23,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-async def example_scrapping():
-    """Example of scrapping EDAM concepts from bio.tools."""
-    print("=== EDAM Concept Scrapping Example ===\n")
+async def example_scraping():
+    """Example of scraping EDAM concepts from bio.tools."""
+    print("=== EDAM Concept Scraping Example ===\n")
 
     biotools_tests = [
         {
@@ -70,11 +70,11 @@ async def example_scrapping():
 
 async def main():
     """Run the examples."""
-    print("EDAM MCP Server - Basic Usage Examples - Scrapping")
+    print("EDAM MCP Server - Basic Usage Examples - Scraping")
     print("=" * 50)
 
     # Run mapping example
-    await example_scrapping()
+    await example_scraping()
 
     print("Examples completed!")
 

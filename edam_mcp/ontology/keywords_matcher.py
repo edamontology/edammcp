@@ -152,7 +152,7 @@ class KeywordMatcher:
                     concept_uri=uri,
                     concept_label=concept["label"],
                     confidence=normalized_confidence,
-                    concept_type="",  # Will be set based on URI structure if needed
+                    concept_type=concept.get("type", "Unknown"),
                     definition=concept.get("definition"),
                     synonyms=concept.get("synonyms", []),
                     match_type="substring",
@@ -241,7 +241,7 @@ class KeywordMatcher:
                     concept_uri=uri,
                     concept_label=concept["label"],
                     confidence=clamped_score,
-                    concept_type="",  # Will be set based on URI structure if needed
+                    concept_type=concept.get("type", "Unknown"),
                     definition=concept.get("definition"),
                     synonyms=concept.get("synonyms", []),
                     match_type="list_embeddings",
@@ -322,7 +322,7 @@ class KeywordMatcher:
                     concept_uri=uri,
                     concept_label=concept["label"],
                     confidence=clamped_score,
-                    concept_type="",  # Will be set based on URI structure if needed
+                    concept_type=concept.get("type", "Unknown"),
                     definition=concept.get("definition"),
                     synonyms=concept.get("synonyms", []),
                     match_type="joined_embedding",

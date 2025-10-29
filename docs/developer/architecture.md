@@ -12,24 +12,24 @@ graph TB
         A[MCP Client]
         B[FastMCP Server]
     end
-    
+
     subgraph "Tool Layer"
         C[Mapping Tool]
         D[Suggestion Tool]
     end
-    
+
     subgraph "Core Layer"
         E[Ontology Loader]
         F[Concept Matcher]
         G[Concept Suggester]
     end
-    
+
     subgraph "Data Layer"
         H[EDAM Ontology]
         I[Sentence Transformers]
         J[Text Processing]
     end
-    
+
     A --> B
     B --> C
     B --> D
@@ -48,12 +48,14 @@ graph TB
 The main server component that handles MCP protocol communication and tool registration.
 
 **Key Responsibilities:**
+
 - MCP protocol implementation
 - Tool registration and routing
 - Request/response handling
 - Server lifecycle management
 
 **Key Classes:**
+
 - `FastMCP` - Main server instance
 - `Context` - MCP context for logging and progress
 
@@ -64,12 +66,14 @@ Handles loading, parsing, and querying the EDAM ontology.
 #### Ontology Loader (`edam_mcp.ontology.loader`)
 
 **Responsibilities:**
+
 - Download and parse EDAM OWL files
 - Extract concept metadata (labels, definitions, synonyms)
 - Build concept hierarchy
 - Cache ontology data
 
 **Key Methods:**
+
 ```python
 class OntologyLoader:
     def load_ontology(self) -> bool
@@ -81,12 +85,14 @@ class OntologyLoader:
 #### Concept Matcher (`edam_mcp.ontology.matcher`)
 
 **Responsibilities:**
+
 - Semantic similarity calculation
 - Embedding generation and caching
 - Exact and fuzzy matching
 - Confidence scoring
 
 **Key Methods:**
+
 ```python
 class ConceptMatcher:
     def match_concepts(self, description: str, ...) -> List[ConceptMatch]
@@ -97,12 +103,14 @@ class ConceptMatcher:
 #### Concept Suggester (`edam_mcp.ontology.suggester`)
 
 **Responsibilities:**
+
 - Generate new concept suggestions
 - Infer concept types
 - Suggest hierarchical placement
 - Calculate suggestion confidence
 
 **Key Methods:**
+
 ```python
 class ConceptSuggester:
     def suggest_concepts(self, description: str, ...) -> List[SuggestedConcept]
@@ -117,12 +125,14 @@ MCP tool implementations that expose functionality to clients.
 #### Mapping Tool (`edam_mcp.tools.mapping`)
 
 **Responsibilities:**
+
 - Handle mapping requests
 - Coordinate ontology loading and matching
 - Return structured responses
 - Error handling and logging
 
 **API:**
+
 ```python
 @mcp.tool
 async def map_to_edam_concept(
@@ -134,12 +144,14 @@ async def map_to_edam_concept(
 #### Suggestion Tool (`edam_mcp.tools.suggestion`)
 
 **Responsibilities:**
+
 - Handle suggestion requests
 - Attempt mapping first, then suggest
 - Generate multiple suggestion approaches
 - Return hierarchical suggestions
 
 **API:**
+
 ```python
 @mcp.tool
 async def suggest_new_concept(
@@ -171,6 +183,7 @@ Helper functions for text processing and similarity calculation.
 #### Text Processing (`edam_mcp.utils.text_processing`)
 
 **Functions:**
+
 - `preprocess_text()` - Clean and normalize text
 - `extract_keywords()` - Extract key terms
 - `tokenize_text()` - Split text into tokens
@@ -178,6 +191,7 @@ Helper functions for text processing and similarity calculation.
 #### Similarity (`edam_mcp.utils.similarity`)
 
 **Functions:**
+
 - `calculate_cosine_similarity()` - Vector similarity
 - `calculate_jaccard_similarity()` - Set similarity
 - `calculate_string_similarity()` - String similarity
@@ -193,7 +207,7 @@ sequenceDiagram
     participant Loader
     participant Matcher
     participant Ontology
-    
+
     Client->>Server: MappingRequest
     Server->>Loader: load_ontology()
     Loader->>Ontology: Download OWL file
@@ -215,7 +229,7 @@ sequenceDiagram
     participant Suggester
     participant Matcher
     participant Loader
-    
+
     Client->>Server: SuggestionRequest
     Server->>Matcher: Try mapping first
     Matcher-->>Server: Low confidence matches
@@ -230,26 +244,31 @@ sequenceDiagram
 ## 🎯 Design Principles
 
 ### 1. **Modularity**
+
 - Clear separation of concerns
 - Loose coupling between components
 - Easy to extend and modify
 
 ### 2. **Async-First**
+
 - All I/O operations are async
 - Non-blocking ontology loading
 - Concurrent request handling
 
 ### 3. **Lazy Loading**
+
 - Heavy dependencies loaded on demand
 - Ontology cached after first load
 - ML models loaded only when needed
 
 ### 4. **Type Safety**
+
 - Complete type hints throughout
 - Pydantic validation for all data
 - Runtime type checking
 
 ### 5. **Error Handling**
+
 - Graceful degradation
 - Detailed error messages
 - Proper logging at all levels
@@ -260,7 +279,7 @@ The system is configured through environment variables and the `Settings` class:
 
 ```python
 class Settings(BaseSettings):
-    edam_ontology_url: str
+    ontology_url: str
     similarity_threshold: float
     max_suggestions: int
     embedding_model: str
@@ -271,18 +290,21 @@ class Settings(BaseSettings):
 ## 📊 Performance Characteristics
 
 ### Memory Usage
+
 - **Base**: ~50MB (Python + dependencies)
 - **Ontology**: ~100MB (3,515 concepts)
 - **ML Models**: ~350MB (sentence transformers)
 - **Total**: ~500MB
 
 ### Response Times
+
 - **First Run**: ~5 seconds (model download)
 - **Subsequent Runs**: <1 second
 - **Ontology Loading**: ~2 seconds
 - **Semantic Matching**: ~0.5 seconds
 
 ### Scalability
+
 - **Concurrent Requests**: Full async support
 - **Memory Scaling**: Linear with ontology size
 - **CPU Scaling**: Parallel embedding generation
@@ -290,6 +312,7 @@ class Settings(BaseSettings):
 ## 🔮 Future Enhancements
 
 ### Planned Improvements
+
 1. **Caching Layer**: Redis for distributed caching
 2. **Database Backend**: PostgreSQL for ontology storage
 3. **Batch Processing**: Bulk concept mapping
@@ -297,7 +320,9 @@ class Settings(BaseSettings):
 5. **API Versioning**: Backward compatibility
 
 ### Extension Points
+
 1. **New Tool Types**: Additional MCP tools
 2. **Alternative Matchers**: Different similarity algorithms
 3. **External APIs**: Integration with other ontologies
-4. **Plugin System**: Third-party extensions 
+4. **Plugin System**: Third-party extensions
+

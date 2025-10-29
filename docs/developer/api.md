@@ -126,20 +126,20 @@ class MappingRequest(BaseModel):
         min_length=1,
         max_length=10000
     )
-    
+
     context: Optional[str] = Field(
         None,
         description="Additional context about the description",
         max_length=2000
     )
-    
+
     max_results: Optional[int] = Field(
         5,
         ge=1,
         le=20,
         description="Maximum number of concept matches to return"
     )
-    
+
     min_confidence: Optional[float] = Field(
         0.5,
         ge=0.0,
@@ -158,19 +158,19 @@ class SuggestionRequest(BaseModel):
         min_length=1,
         max_length=10000
     )
-    
+
     concept_type: Optional[str] = Field(
         None,
         description="Type of concept (Operation, Data, Format, Topic, Identifier)",
         pattern="^(Operation|Data|Format|Topic|Identifier)$"
     )
-    
+
     parent_concept: Optional[str] = Field(
         None,
         description="Suggested parent concept URI or label",
         max_length=500
     )
-    
+
     rationale: Optional[str] = Field(
         None,
         description="Rationale for why this concept should be added",
@@ -188,29 +188,29 @@ class ConceptMatch(BaseModel):
         ...,
         description="URI of the matched EDAM concept"
     )
-    
+
     concept_label: str = Field(
         ...,
         description="Human-readable label of the concept"
     )
-    
+
     confidence: float = Field(
         ...,
         ge=0.0,
         le=1.0,
         description="Confidence score for the match (0.0 to 1.0)"
     )
-    
+
     concept_type: str = Field(
         ...,
         description="Type of the concept (Operation, Data, Format, Topic, Identifier)"
     )
-    
+
     definition: Optional[str] = Field(
         None,
         description="Definition of the concept"
     )
-    
+
     synonyms: List[str] = Field(
         default_factory=list,
         description="List of synonyms for the concept"
@@ -225,32 +225,32 @@ class SuggestedConcept(BaseModel):
         ...,
         description="Suggested label for the new concept"
     )
-    
+
     suggested_uri: str = Field(
         ...,
         description="Suggested URI for the new concept"
     )
-    
+
     concept_type: str = Field(
         ...,
         description="Type of the suggested concept"
     )
-    
+
     definition: str = Field(
         ...,
         description="Definition for the suggested concept"
     )
-    
+
     parent_concept: Optional[str] = Field(
         None,
         description="Suggested parent concept URI"
     )
-    
+
     rationale: str = Field(
         ...,
         description="Rationale for suggesting this concept"
     )
-    
+
     confidence: float = Field(
         ...,
         ge=0.0,
@@ -266,11 +266,11 @@ class SuggestedConcept(BaseModel):
 ```python
 class Settings(BaseSettings):
     # EDAM Ontology Configuration
-    edam_ontology_url: str = Field(
+    ontology_url: str = Field(
         default="https://raw.githubusercontent.com/edamontology/edamontology/master/EDAM_dev.owl",
         description="URL to the EDAM ontology OWL file"
     )
-    
+
     # Matching Configuration
     similarity_threshold: float = Field(
         default=0.7,
@@ -278,32 +278,32 @@ class Settings(BaseSettings):
         le=1.0,
         description="Minimum confidence threshold for concept mappings"
     )
-    
+
     max_suggestions: int = Field(
         default=5,
         ge=1,
         le=20,
         description="Maximum number of suggestions to return"
     )
-    
+
     # Model Configuration
     embedding_model: str = Field(
         default="all-MiniLM-L6-v2",
         description="Sentence transformer model for text embeddings"
     )
-    
+
     # Cache Configuration
     cache_ttl: int = Field(
         default=3600,
         description="Cache TTL in seconds for ontology data"
     )
-    
+
     # Logging Configuration
     log_level: str = Field(
         default="INFO",
         description="Logging level"
     )
-    
+
     model_config = {
         "env_prefix": "EDAM_",
         "case_sensitive": False
@@ -312,14 +312,14 @@ class Settings(BaseSettings):
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `EDAM_ONTOLOGY_URL` | EDAM dev OWL | URL to EDAM ontology file |
-| `EDAM_SIMILARITY_THRESHOLD` | 0.7 | Minimum confidence threshold |
-| `EDAM_MAX_SUGGESTIONS` | 5 | Maximum suggestions to return |
-| `EDAM_EMBEDDING_MODEL` | all-MiniLM-L6-v2 | Sentence transformer model |
-| `EDAM_CACHE_TTL` | 3600 | Cache TTL in seconds |
-| `EDAM_LOG_LEVEL` | INFO | Logging level |
+| Variable                    | Default          | Description                   |
+| --------------------------- | ---------------- | ----------------------------- |
+| `EDAM_ONTOLOGY_URL`         | EDAM dev OWL     | URL to EDAM ontology file     |
+| `EDAM_SIMILARITY_THRESHOLD` | 0.7              | Minimum confidence threshold  |
+| `EDAM_MAX_SUGGESTIONS`      | 5                | Maximum suggestions to return |
+| `EDAM_EMBEDDING_MODEL`      | all-MiniLM-L6-v2 | Sentence transformer model    |
+| `EDAM_CACHE_TTL`            | 3600             | Cache TTL in seconds          |
+| `EDAM_LOG_LEVEL`            | INFO             | Logging level                 |
 
 ## 🚀 Direct API Usage
 
@@ -439,4 +439,5 @@ class ErrorResponse(BaseModel):
 
 - Optional API key authentication
 - JWT token support
-- Role-based access control 
+- Role-based access control
+

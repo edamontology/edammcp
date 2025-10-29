@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     """Application settings with environment variable support."""
 
     # EDAM Ontology Configuration
-    edam_ontology_url: str = Field(
+    ontology_url: str = Field(
         default="https://edamontology.org/EDAM.owl",
         description="URL to the default version of the EDAM ontology OWL file",
     )

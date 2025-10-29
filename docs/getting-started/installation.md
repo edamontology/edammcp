@@ -102,7 +102,7 @@ docker run -p 8000:8000 edam-mcp-server
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
+version: "3.8"
 services:
   edam-mcp:
     build: .
@@ -129,6 +129,7 @@ uv run python examples/simple_test.py
 ```
 
 Expected output:
+
 ```
 ✅ Basic imports successful
 ✅ Server creation successful
@@ -148,6 +149,7 @@ uv run python examples/basic_usage_suggester.py
 ```
 
 Expected output:
+
 ```
 ✅ Ontology loading successful
 ✅ Concept mapping successful
@@ -194,7 +196,7 @@ You can also use a configuration file:
 from edam_mcp.config import Settings
 
 settings = Settings(
-    edam_ontology_url="https://raw.githubusercontent.com/edamontology/edamontology/master/EDAM_dev.owl",
+    ontology_url="https://raw.githubusercontent.com/edamontology/edamontology/master/EDAM_dev.owl",
     similarity_threshold=0.7,
     max_suggestions=5,
     embedding_model="all-MiniLM-L6-v2",
@@ -378,4 +380,5 @@ After installation:
 2. **Check the [Configuration Guide](configuration.md)** for advanced setup
 3. **Explore [Examples](../examples/basic-usage.md)** for usage patterns
 4. **Review [API Documentation](../developer/api.md)** for detailed reference
-5. **Join the [Community](../contributing/development-setup.md)** for support 
+5. **Join the [Community](../contributing/development-setup.md)** for support
+

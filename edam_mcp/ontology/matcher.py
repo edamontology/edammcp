@@ -81,38 +81,6 @@ class ConceptMatcher:
 
         return matches[:max_results]
 
-    def match_concepts_by_keyword(
-        self,
-        keyword: str,
-        max_results: int = 5,
-    ) -> list[ConceptMatch]:
-        """Find EDAM concepts by keywords.
-
-        Args:
-            keyword: The keyword to match.
-            max_results: Maximum number of matches to return.
-
-        Returns:
-            List of concept matches.
-        """
-        keyword = keyword.lower()
-
-        # Filter and sort results
-        matches = []
-        for uri, concept in self.ontology_loader.concepts.items():
-            if keyword in concept["label"]:
-                match = ConceptMatch(
-                    concept_uri=uri,
-                    concept_label=concept["label"],
-                    confidence=None,
-                    concept_type=concept["type"],
-                    definition=concept["definition"],
-                    synonyms=concept["synonyms"],
-                )
-                matches.append(match)
-
-        return matches[:max_results]
-
     def _build_embeddings(self) -> None:
         """Build embeddings for all concepts in the ontology."""
         if self.embedding_model is None:

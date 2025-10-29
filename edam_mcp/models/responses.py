@@ -22,6 +22,14 @@ class ConceptMatch(BaseModel):
     synonyms: list[str] = Field(default_factory=list, description="List of synonyms for the concept")
 
 
+class KeywordMatch(ConceptMatch):
+    """Represents a keyword match result, extending ConceptMatch with matching metadata."""
+
+    match_type: str = Field(..., description="Type of matching algorithm used (e.g., substring, list_embeddings, joined_embedding)")
+
+    matched_keywords: list[str] = Field(..., description="List of keywords that matched this concept")
+
+
 class MappingResponse(BaseModel):
     """Response model for concept mapping results."""
 

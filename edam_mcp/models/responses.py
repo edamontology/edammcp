@@ -10,7 +10,7 @@ class ConceptMatch(BaseModel):
 
     concept_label: str = Field(..., description="Human-readable label of the concept")
 
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score for the match (0.0 to 1.0)")
+    confidence: float | None = Field(..., ge=0.0, le=1.0, description="Confidence score for the match (0.0 to 1.0)")
 
     concept_type: str = Field(
         ...,
@@ -20,6 +20,16 @@ class ConceptMatch(BaseModel):
     definition: str | None = Field(None, description="Definition of the concept")
 
     synonyms: list[str] = Field(default_factory=list, description="List of synonyms for the concept")
+
+
+class KeywordMatch(ConceptMatch):
+    """Represents a keyword match result, extending ConceptMatch with matching metadata."""
+
+    match_type: str = Field(
+        ..., description="Type of matching algorithm used (e.g., substring, list_embeddings, joined_embedding)"
+    )
+
+    matched_keywords: list[str] = Field(..., description="List of keywords that matched this concept")
 
 
 class MappingResponse(BaseModel):
@@ -62,3 +72,17 @@ class SuggestionResponse(BaseModel):
     mapping_attempted: bool = Field(..., description="Whether concept mapping was attempted first")
 
     mapping_failed_reason: str | None = Field(None, description="Reason why mapping failed (if applicable)")
+
+
+class KeywordMappingResponse(BaseModel):
+    """Response model for keyword mapping results."""
+
+    matches: list[KeywordMatch] = Field(..., description="List of matched concepts ordered by confidence")
+
+    total_matches: int = Field(..., description="Total number of matches found")
+
+    match_mode: str = Field(
+        ..., description="Matching algorithm used (substring, list_embeddings, or joined_embedding)"
+    )
+
+    threshold: float | None = Field(None, description="Similarity threshold used for filtering (if applicable)")

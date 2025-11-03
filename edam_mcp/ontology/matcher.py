@@ -3,6 +3,7 @@
 import logging
 
 import numpy as np
+from sentence_transformers import SentenceTransformer
 
 from ..config import settings
 from ..models.responses import ConceptMatch
@@ -24,40 +25,6 @@ class ConceptMatcher:
         self.ontology_loader = ontology_loader
         self.embedding_model = None
         self.concept_embeddings: dict[str, np.ndarray] = {}
-        # Don't build embeddings immediately - do it lazily when needed
-
-    def _build_embeddings(self) -> None:
-        """Build embeddings for all concepts in the ontology."""
-        # Lazy import of sentence_transformers
-        try:
-            from sentence_transformers import SentenceTransformer
-        except ImportError:
-            logger.error("sentence_transformers not available. Install with: pip install sentence-transformers")
-            return
-
-        if self.embedding_model is None:
-            self.embedding_model = SentenceTransformer(settings.embedding_model)
-
-        logger.info("Building concept embeddings...")
-
-        for uri, concept in self.ontology_loader.concepts.items():
-            # Create text representation for embedding
-            text_parts = [concept["label"]]
-
-            if concept["definition"]:
-                text_parts.append(concept["definition"])
-
-            if concept["synonyms"]:
-                text_parts.extend(concept["synonyms"])
-
-            text = " ".join(text_parts)
-            processed_text = preprocess_text(text)
-
-            # Generate embedding
-            embedding = self.embedding_model.encode(processed_text, show_progress_bar=False)
-            self.concept_embeddings[uri] = embedding
-
-        logger.info(f"Built embeddings for {len(self.concept_embeddings)} concepts")
 
     def match_concepts(
         self,
@@ -109,10 +76,36 @@ class ConceptMatcher:
                         synonyms=concept["synonyms"],
                     )
                     matches.append(match)
+            else:
+                break
 
-        # Sort by confidence and limit results
-        matches.sort(key=lambda x: x.confidence, reverse=True)
         return matches[:max_results]
+
+    def _build_embeddings(self) -> None:
+        """Build embeddings for all concepts in the ontology."""
+        if self.embedding_model is None:
+            self.embedding_model = SentenceTransformer(settings.embedding_model)
+
+        logger.info("Building concept embeddings...")
+
+        for uri, concept in self.ontology_loader.concepts.items():
+            # Create text representation for embedding
+            text_parts = [concept["label"]]
+
+            if concept["definition"]:
+                text_parts.append(concept["definition"])
+
+            if concept["synonyms"]:
+                text_parts.extend(concept["synonyms"])
+
+            text = " ".join(text_parts)
+            processed_text = preprocess_text(text)
+
+            # Generate embedding
+            embedding = self.embedding_model.encode(processed_text)
+            self.concept_embeddings[uri] = embedding
+
+        logger.info(f"Built embeddings for {len(self.concept_embeddings)} concepts")
 
     def _calculate_similarities(self, description_embedding: np.ndarray) -> list[tuple[str, float]]:
         """Calculate cosine similarities between description and all concepts.
@@ -136,14 +129,10 @@ class ConceptMatcher:
 
     def _cosine_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
         """Calculate cosine similarity between two vectors."""
-        dot_product = np.dot(vec1, vec2)
-        norm1 = np.linalg.norm(vec1)
-        norm2 = np.linalg.norm(vec2)
-
-        if norm1 == 0 or norm2 == 0:
+        try:
+            return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+        except ZeroDivisionError:
             return 0.0
-
-        return dot_product / (norm1 * norm2)
 
     def find_exact_matches(self, description: str) -> list[ConceptMatch]:
         """Find exact text matches in concept labels and synonyms.

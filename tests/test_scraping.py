@@ -48,7 +48,7 @@ class TestScrapingTool(TestCase):
         - context
         - BiotoolsRequest
         - ConceptMatch
-        - BiotoolsScrapper
+        - BiotoolsScraper
         """
 
         self.test_request = BiotoolsRequest(
@@ -73,7 +73,7 @@ class TestScrapingTool(TestCase):
             synonyms=["Hypertext Markup Language"],
         )
 
-        self.scrapper = BiotoolsScrapper()
+        self.scraper = BiotoolsScraper()
 
         class MockContext:
             def __init__(self):

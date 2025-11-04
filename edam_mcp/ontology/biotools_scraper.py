@@ -52,11 +52,14 @@ class BiotoolsScraper:
         Returns:
             List of concept matches.
         """
-        if not ontology_type in OntologyTypes:
+        if ontology_type not in OntologyTypes:
             raise ValueError("Not a valid ontology type")
 
         if not tool_name and not tool_curie:
             raise ValueError("Either tool_name or tool_curie must be provided")
+
+        if ontology_type not in OntologyTypes:
+            raise ValueError("Not a valid ontology type")
 
         tool_info = self._get_biotools_ontology(tool_name, tool_curie)
         try:

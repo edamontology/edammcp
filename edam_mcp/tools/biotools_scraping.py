@@ -50,13 +50,13 @@ async def extract_edam_concepts_from_biotools(request: BiotoolsRequest, context:
 
 
 # Alternative function signature for direct use
-async def exctract_concepts_from_biotools(
+async def extract_concepts_from_biotools(
     name: str | None = None,
     biotools_curie: str | None = None,
     ontology_type: str | None = None,
     max_results: int = 5,
 ) -> BiotoolsResponse:
-    """Alternative interface for exctracting concepts from bio.tools.
+    """Alternative interface for extracting concepts from bio.tools.
 
     Args:
         name: Name of the tool.

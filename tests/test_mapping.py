@@ -1,83 +1,219 @@
 """Tests for the mapping functionality."""
 
-from unittest.mock import Mock, patch
+import logging
+from unittest import TestCase
+from unittest.mock import patch
 
-import pytest
+import numpy as np
+import responses
 
 from edam_mcp.models.requests import MappingRequest
 from edam_mcp.models.responses import ConceptMatch, MappingResponse
-from edam_mcp.tools.mapping import map_description_to_concepts
+from edam_mcp.ontology.loader import OntologyLoader
+from edam_mcp.ontology.matcher import ConceptMatcher
+from edam_mcp.tools.mapping import map_to_edam_concept
 
 
-class TestMappingTool:
+def mock_edam_request(rsps: responses.RequestsMock):
+    """Mock the request to EDAM"""
+    url = "https://edamontology.org/EDAM.owl"
+    resp = """<?xml version="1.0"?>
+    <rdf:RDF xmlns="http://edamontology.org/"
+        xml:base="http://edamontology.org/"
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:dcterms="http://purl.org/dc/terms/"
+        xmlns:owl="http://www.w3.org/2002/07/owl#"
+        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+        xmlns:xml="http://www.w3.org/XML/1998/namespace"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+        xmlns:doap="http://usefulinc.com/ns/doap#"
+        xmlns:foaf="http://xmlns.com/foaf/0.1/"
+        xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+        xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#"
+        xmlns:oboLegacy="http://purl.obolibrary.org/obo/">
+
+    <!-- http://www.geneontology.org/formats/oboInOwl#hasDefinition -->
+    <owl:AnnotationProperty rdf:about="http://www.geneontology.org/formats/oboInOwl#hasDefinition"/>
+    
+    <!-- http://www.geneontology.org/formats/oboInOwl#hasExactSynonym -->
+    <owl:AnnotationProperty rdf:about="http://www.geneontology.org/formats/oboInOwl#hasExactSynonym"/>
+
+    <!-- http://edamontology.org/format_2331 -->
+    <owl:Class rdf:about="http://edamontology.org/format_2331">
+        <oboInOwl:hasDefinition>HTML format.</oboInOwl:hasDefinition>
+        <oboInOwl:hasExactSynonym>Hypertext Markup Language</oboInOwl:hasExactSynonym>
+        <rdfs:label>HTML</rdfs:label>
+    </owl:Class>
+
+    <!-- http://edamontology.org/format_3475 -->
+    <owl:Class rdf:about="http://edamontology.org/format_3475">
+        <oboInOwl:hasDefinition>Tabular data represented as tab-separated values in a text file.</oboInOwl:hasDefinition>
+        <oboInOwl:hasExactSynonym>Tab-delimited</oboInOwl:hasExactSynonym>
+        <oboInOwl:hasExactSynonym>Tab-separated values</oboInOwl:hasExactSynonym>
+        <oboInOwl:hasExactSynonym>tab</oboInOwl:hasExactSynonym>
+        <rdfs:label>TSV</rdfs:label>
+    </owl:Class>
+
+    <!-- http://edamontology.org/data_0867 -->
+    <owl:Class rdf:about="http://edamontology.org/data_0867">
+        <rdfs:label>Sequence alignment report</rdfs:label>
+    </owl:Class>
+
+    </rdf:RDF>
+    """
+    rsps.add(method="GET", url=url, body=resp.encode("utf-8"), status=200, content_type="application/rdf+xml")
+
+
+class TestMappingTool(TestCase):
     """Test cases for the mapping tool."""
 
-    @pytest.mark.asyncio
-    async def test_mapping_request_validation(self):
-        """Test that mapping requests are properly validated."""
-        # Valid request
-        request = MappingRequest(
-            description="sequence alignment tool",
-            context="bioinformatics",
-            max_results=5,
-            min_confidence=0.7,
+    def setUp(self):
+        """Set up mock objects:
+        - context
+        - MappingRequest
+        - ConceptMatch
+        - MockEmbeddingModel
+        """
+
+        class MockContext:
+            def __init__(self):
+                self.log = logging.getLogger(__name__)
+
+        self.mock_context = MockContext()
+
+        self.test_request = MappingRequest(
+            description="HTML file",
+            context="my context",
+            max_results=1,
+            min_confidence=0.5,
         )
 
-        assert request.description == "sequence alignment tool"
-        assert request.context == "bioinformatics"
-        assert request.max_results == 5
-        assert request.min_confidence == 0.7
-
-    @pytest.mark.asyncio
-    async def test_mapping_response_structure(self):
-        """Test that mapping responses have the correct structure."""
-        # Create a mock concept match
-        match = ConceptMatch(
-            concept_uri="http://edamontology.org/operation_0296",
-            concept_label="Sequence alignment",
-            confidence=0.85,
-            concept_type="Operation",
-            definition="Aligning biological sequences",
-            synonyms=["alignment", "sequence alignment"],
+        self.mock_match_html = ConceptMatch(
+            concept_uri="http://edamontology.org/format_2331",
+            concept_label="HTML",
+            confidence=1.0,
+            concept_type="Format",
+            definition="HTML format.",
+            synonyms=["Hypertext Markup Language"],
+        )
+        self.mock_match_tsv = ConceptMatch(
+            concept_uri="http://edamontology.org/format_3475",
+            concept_label="TSV",
+            confidence=0.9,
+            concept_type="Format",
+            definition="Tabular data represented as tab-separated values in a text file.",
+            synonyms=["Tab-delimited", "Tab-separated values", "tab"],
         )
 
-        response = MappingResponse(
-            matches=[match],
-            total_matches=1,
-            has_exact_match=False,
-            confidence_threshold=0.7,
-        )
+        mock_edam_request(responses)
+        self.loader = OntologyLoader()
+        self.loader.load_ontology()
+        self.matcher = ConceptMatcher(self.loader)
 
-        assert len(response.matches) == 1
-        assert response.total_matches == 1
-        assert response.has_exact_match is False
-        assert response.confidence_threshold == 0.7
-        assert response.matches[0].confidence == 0.85
+        class MockEmbeddingModel:
+            def encode(self, text, show_progress_bar=False):
+                t = (text or "").lower()
+                if "html" in t:
+                    return np.array([1.0, 0.0])
+                if "tsv" in t or "tab" in t:
+                    return np.array([0.0, 1.0])
+                return np.array([0.9, 0.1])
 
-    @pytest.mark.asyncio
-    @patch("edam_mcp.tools.mapping.OntologyLoader")
-    @patch("edam_mcp.tools.mapping.ConceptMatcher")
-    async def test_mapping_tool_integration(self, mock_matcher, mock_loader):
+        self.mock_embedding_model = MockEmbeddingModel()
+
+    @responses.activate
+    def test_load_ontology(self):
+        """Test the OntologyLoader class"""
+        assert self.loader.concepts["http://edamontology.org/format_2331"]
+        assert self.loader.concepts["http://edamontology.org/format_2331"].get("label") == "HTML"
+
+    @patch("edam_mcp.ontology.loader.OntologyLoader.load_ontology")
+    @patch("edam_mcp.ontology.matcher.ConceptMatcher.find_exact_matches")
+    async def test_map_to_edam_concept_exact_match(self, mock_exact_matches, mock_loader):
         """Test the mapping tool integration."""
         # Mock the ontology loader
-        mock_loader_instance = Mock()
-        mock_loader_instance.load_ontology.return_value = True
-        mock_loader.return_value = mock_loader_instance
+        mock_loader.return_value = True
 
         # Mock the concept matcher
-        mock_matcher_instance = Mock()
-        mock_matcher_instance.find_exact_matches.return_value = []
-        mock_matcher_instance.match_concepts.return_value = []
-        mock_matcher.return_value = mock_matcher_instance
+        mock_exact_matches.return_value = [self.mock_match_html]
 
         # Test the mapping function
-        response = await map_description_to_concepts(
-            description="test description",
-            context="test context",
-            max_results=3,
-            min_confidence=0.6,
+        response = await map_to_edam_concept(
+            self.test_request,
+            self.mock_context,
         )
 
         assert isinstance(response, MappingResponse)
-        assert response.total_matches == 0
+        assert response.matches[0] == self.mock_match_html
+        assert response.total_matches == 1
+        assert response.has_exact_match is True
+
+    @patch("edam_mcp.ontology.loader.OntologyLoader.load_ontology")
+    @patch("edam_mcp.ontology.matcher.ConceptMatcher.match_concepts")
+    @patch("edam_mcp.ontology.matcher.ConceptMatcher.find_exact_matches")
+    async def test_map_to_edam_concept_no_exact_match(self, mock_exact_matches, mock_matcher, mock_loader):
+        """Test the mapping tool integration."""
+        # Mock the ontology loader
+        mock_loader.return_value = True
+
+        # Mock the concept matcher
+        mock_exact_matches.return_value = []
+        mock_matcher.return_value = [self.mock_match_tsv]
+
+        # Test the mapping function
+        response = await map_to_edam_concept(
+            self.test_request,
+            self.mock_context,
+        )
+
+        assert isinstance(response, MappingResponse)
+        assert response.matches[0] == self.mock_match_html
+        assert response.matches[1] == self.mock_match_tsv
+        assert response.total_matches == 2
         assert response.has_exact_match is False
+
+    @patch("edam_mcp.ontology.loader.OntologyLoader.load_ontology")
+    @patch("edam_mcp.ontology.matcher.ConceptMatcher.match_concepts")
+    @patch("edam_mcp.ontology.matcher.ConceptMatcher.find_exact_matches")
+    async def test_map_to_edam_concept_max_results(self, mock_exact_matches, mock_matcher, mock_loader):
+        """Test the mapping tool integration."""
+        # Mock the ontology loader
+        mock_loader.return_value = True
+
+        # Mock the concept matcher
+        mock_exact_matches.return_value = []
+        mock_matcher.return_value = [self.mock_match_tsv]
+
+        # Test the mapping function
+        response = await map_to_edam_concept(
+            self.test_request,
+            self.mock_context,
+        )
+
+        assert isinstance(response, MappingResponse)
+        assert response.matches[0] == self.mock_match_html
+        assert response.total_matches == 1
+        assert response.has_exact_match is False
+
+    @responses.activate
+    def test_match_concepts(self):
+        """Test the concept matcher"""
+
+        self.matcher.embedding_model = self.mock_embedding_model
+
+        matches = self.matcher.match_concepts("HTML file.")
+        assert len(matches) == 5
+        assert self.mock_match_html.concept_uri in [match.concept_uri for match in matches]
+        assert self.mock_match_html.concept_label in [match.concept_label for match in matches]
+        assert self.mock_match_html.concept_type in [match.concept_type for match in matches]
+        assert self.mock_match_html.definition in [match.definition for match in matches]
+        assert self.mock_match_html.synonyms in [match.synonyms for match in matches]
+        assert matches[0].confidence == 1.0
+
+    @responses.activate
+    def test_find_exact_matches(self):
+        """Test exact matching"""
+        matches = self.matcher.find_exact_matches("HTML")
+        assert len(matches) == 1
+        assert matches[0] == self.mock_match_html

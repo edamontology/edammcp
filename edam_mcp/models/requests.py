@@ -12,16 +12,36 @@ class MappingRequest(BaseModel):
         min_length=1,
         max_length=10000,
     )
-
     context: str | None = Field(
         None,
         description="Additional context about the description (e.g., tool name, domain)",
         max_length=2000,
     )
-
     max_results: int | None = Field(5, ge=1, le=20, description="Maximum number of concept matches to return")
-
     min_confidence: float | None = Field(0.5, ge=0.0, le=1.0, description="Minimum confidence threshold for matches")
+
+
+class BiotoolsRequest(BaseModel):
+    """Request model for scraping EDAM concepts from bio.tools."""
+
+    name: str = Field(
+        None,
+        description="The name of the tool being processed.",
+        min_length=1,
+        max_length=20,
+    )
+    biotools_curie: str | None = Field(
+        None,
+        description="The biotoolsCURIE of the tool being processed.",
+        min_length=1,
+        max_length=20,
+    )
+    ontology_type: str | None = Field(
+        None,
+        description="What ontology terms to retrieve from bio.tools. Can be one of [operation, input, output, topic]",
+        pattern="^(operation|input|output|topic)$",
+    )
+    max_results: int | None = Field(5, ge=1, le=20, description="Maximum number of concept matches to return")
 
 
 class SuggestionRequest(BaseModel):
@@ -33,15 +53,12 @@ class SuggestionRequest(BaseModel):
         min_length=1,
         max_length=10000,
     )
-
     concept_type: str | None = Field(
         None,
         description="Type of concept (e.g., 'Operation', 'Data', 'Format', 'Topic')",
         pattern="^(Operation|Data|Format|Topic|Identifier)$",
     )
-
     parent_concept: str | None = Field(None, description="Suggested parent concept URI or label", max_length=500)
-
     rationale: str | None = Field(
         None,
         description="Rationale for why this concept should be added",

@@ -57,7 +57,7 @@ async def map_to_edam_concept(request: MappingRequest, context: Context) -> Mapp
         context.info(f"Found {len(matches)} semantic matches")
 
         return MappingResponse(
-            matches=matches,
+            matches=matches[: request.max_results],
             total_matches=len(matches),
             has_exact_match=False,
             confidence_threshold=request.min_confidence,

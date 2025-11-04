@@ -23,7 +23,7 @@ class OntologyLoader:
         Args:
             ontology_url: URL to the EDAM ontology file. Defaults to settings.
         """
-        self.ontology_url = ontology_url or settings.edam_ontology_url
+        self.ontology_url = ontology_url or settings.ontology_url
         self.graph: Graph | None = None
         self.concepts: dict[str, dict] = {}
         self.concept_types: set[str] = set()

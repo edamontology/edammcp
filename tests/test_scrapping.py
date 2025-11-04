@@ -8,8 +8,8 @@ from pydantic_core._pydantic_core import ValidationError
 
 from edam_mcp.models.requests import BiotoolsRequest
 from edam_mcp.models.responses import ConceptMatch
-from edam_mcp.ontology.biotools_scrapper import BiotoolsScrapper
-from edam_mcp.tools.biotools_scrapping import extract_edam_concepts_from_biotools
+from edam_mcp.ontology.biotools_scraper import BiotoolsScraper
+from edam_mcp.tools.biotools_scraping import extract_edam_concepts_from_biotools
 
 
 def mock_biotools_request(rsps: responses.RequestsMock):
@@ -40,8 +40,8 @@ def mock_biotools_request(rsps: responses.RequestsMock):
     rsps.add(method="GET", url=url, json=rsps_json, status=200)
 
 
-class TestScrappingTool(TestCase):
-    """Test cases for the scrapping tool."""
+class TestScrapingTool(TestCase):
+    """Test cases for the scraping tool."""
 
     def setUp(self):
         """Set up mock objects:

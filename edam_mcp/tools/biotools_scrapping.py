@@ -6,7 +6,7 @@ from fastmcp.server import Context
 
 from ..models.requests import BiotoolsRequest
 from ..models.responses import BiotoolsResponse
-from ..ontology.biotools_scrapper import BiotoolsScrapper
+from ..ontology.biotools_scraper import BiotoolsScraper
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +28,11 @@ async def extract_edam_concepts_from_biotools(request: BiotoolsRequest, context:
         # Log the request
         context.log.info(f"Extracting bio.tools ontologies for tools: {request.name}")
 
-        biotools_scrapper = BiotoolsScrapper()
+        biotools_scraper = BiotoolsScraper()
 
         # Extract matches from bio.tools
         context.log.info("Looking for ontology terms on bio.tools...")
-        matches = biotools_scrapper.get_concepts_from_biotools(
+        matches = biotools_scraper.get_concepts_from_biotools(
             tool_name=request.name,
             tool_curie=request.biotools_curie,
             ontology_type=request.ontology_type,
@@ -45,18 +45,18 @@ async def extract_edam_concepts_from_biotools(request: BiotoolsRequest, context:
         )
 
     except Exception as e:
-        context.log.error(f"Error in concept scrapping: {e}")
+        context.log.error(f"Error in concept scraping: {e}")
         raise
 
 
 # Alternative function signature for direct use
-async def exctract_concepts_from_biotools(
+async def extract_concepts_from_biotools(
     name: str | None = None,
     biotools_curie: str | None = None,
     ontology_type: str | None = None,
     max_results: int = 5,
 ) -> BiotoolsResponse:
-    """Alternative interface for exctracting concepts from bio.tools.
+    """Alternative interface for extracting concepts from bio.tools.
 
     Args:
         name: Name of the tool.

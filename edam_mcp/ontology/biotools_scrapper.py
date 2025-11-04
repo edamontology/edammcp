@@ -9,7 +9,7 @@ from ..models.responses import BioToolsInfo, ConceptMatch
 logger = logging.getLogger(__name__)
 
 
-class BiotoolsScrapper:
+class BiotoolsScraper:
     """Obtains EDAM concepts form a tool in bio.tools."""
 
     def __init__(self, ontology_loader=None):
@@ -46,6 +46,9 @@ class BiotoolsScrapper:
         """
         if not tool_name and not tool_curie:
             raise ValueError("Either tool_name or tool_curie must be provided")
+
+        if not ontology_type in OntologyTypes:
+            raise ValueError("Not a valid ontology type")
 
         tool_info = self._get_biotools_ontology(tool_name, tool_curie)
         try:

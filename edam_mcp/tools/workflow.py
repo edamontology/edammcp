@@ -5,9 +5,7 @@ from fastmcp.server import Context
 from ..models.workflow import WorkflowFunction, WorkflowSummaryRequest, WorkflowSummaryResponse
 
 
-async def get_workflow_summary(
-    request: WorkflowSummaryRequest, context: Context
-) -> WorkflowSummaryResponse:
+async def get_workflow_summary(request: WorkflowSummaryRequest, context: Context) -> WorkflowSummaryResponse:
     """Get comprehensive summary of the EDAM mapping workflow.
 
     This entry point function provides a complete overview of the EDAM ontology mapping
@@ -339,4 +337,3 @@ async def get_workflow_summary(
 
     context.info("Workflow summary generated successfully")
     return response
-

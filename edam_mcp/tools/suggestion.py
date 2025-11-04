@@ -31,7 +31,7 @@ async def suggest_new_concept(request: SuggestionRequest, context: Context) -> S
     """
     try:
         # Log the request
-        context.log.info(f"Suggesting concepts for: {request.description[:100]}...")
+        context.info(f"Suggesting concepts for: {request.description[:100]}...")
 
         # Initialize ontology components
         ontology_loader = OntologyLoader()
@@ -42,7 +42,7 @@ async def suggest_new_concept(request: SuggestionRequest, context: Context) -> S
         concept_suggester = ConceptSuggester(ontology_loader, concept_matcher)
 
         # First attempt to map to existing concepts
-        context.log.info("Attempting to map to existing concepts...")
+        context.info("Attempting to map to existing concepts...")
         mapping_response = await map_to_edam_concept(
             MappingRequest(
                 description=request.description,
@@ -55,7 +55,7 @@ async def suggest_new_concept(request: SuggestionRequest, context: Context) -> S
 
         # Check if we found good matches
         if mapping_response.matches and mapping_response.matches[0].confidence >= 0.8:
-            context.log.info("Found high-confidence existing concept matches")
+            context.info("Found high-confidence existing concept matches")
             return SuggestionResponse(
                 suggestions=[],
                 total_suggestions=0,
@@ -64,7 +64,7 @@ async def suggest_new_concept(request: SuggestionRequest, context: Context) -> S
             )
 
         # Generate suggestions for new concepts
-        context.log.info("Generating suggestions for new concepts...")
+        context.info("Generating suggestions for new concepts...")
         suggestions = concept_suggester.suggest_concepts(
             description=request.description,
             concept_type=request.concept_type,
@@ -73,7 +73,7 @@ async def suggest_new_concept(request: SuggestionRequest, context: Context) -> S
             max_suggestions=settings.max_suggestions,
         )
 
-        context.log.info(f"Generated {len(suggestions)} concept suggestions")
+        context.info(f"Generated {len(suggestions)} concept suggestions")
 
         return SuggestionResponse(
             suggestions=suggestions,
@@ -83,7 +83,7 @@ async def suggest_new_concept(request: SuggestionRequest, context: Context) -> S
         )
 
     except Exception as e:
-        context.log.error(f"Error in concept suggestion: {e}")
+        context.error(f"Error in concept suggestion: {e}")
         raise
 
 

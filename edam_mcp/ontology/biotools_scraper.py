@@ -10,7 +10,7 @@ from ..models.responses import BioToolsInfo, ConceptMatch
 logger = logging.getLogger(__name__)
 
 
-class OntologyTypes(str, StrEnum):
+class OntologyTypes(StrEnum):
     OPERATION = "operation"
     TOPIC = "topic"
     INPUT = "input"

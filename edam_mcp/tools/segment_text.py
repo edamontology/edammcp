@@ -29,7 +29,6 @@ def extract_concepts(text: str) -> ReadyForMapping:
     Returns a list of concept-phrases sorted (longest first, then lexically).
     """
     try: 
-        spacy.cli.download("en_core_web_sm")
         nlp = spacy.load("en_core_web_sm")
     except OSError as e:
         print("spaCy model 'en_core_web_sm' not found or not installed.")
@@ -59,11 +58,12 @@ async def segment_text(request: str, context: Context) -> ReadyForMapping:
         context.info(f"Mapping description: {request[:100]}...")
 
         concepts = extract_concepts(request)
-        top_concept = spacy_text_summary(request)
+        top_concept = spacy_summary_phrase(request)
 
         context.info(f"Found {len(concepts)} conceptual segments")
 
         print(concepts)
+        print(top_concept)
         return(ReadyForMapping(top_concept = top_concept, chunks = concepts))
 
     except Exception as e:
@@ -99,4 +99,35 @@ def spacy_text_summary(text: str, num_sentences: int = 2) -> str:
     return summary
 
 # print(spacy_text_summary(text, num_sentences=1))
+
+import spacy
+from spacy.lang.en.stop_words import STOP_WORDS
+from collections import Counter
+
+def spacy_keywords(text: str, max_keywords: int = 3) -> list[str]:
+    nlp = spacy.load("en_core_web_sm")
+    doc = nlp(text)
+    words = [
+        token.lemma_.lower()
+        for token in doc
+        if (
+            token.pos_ in {"NOUN", "PROPN", "ADJ"}
+            and token.lemma_.lower() not in STOP_WORDS
+            and not token.is_punct
+            and len(token.lemma_) > 2
+        )
+    ]
+    counts = Counter(words)
+    keywords = [kw for kw, _ in counts.most_common(max_keywords)]
+    return keywords
+
+def spacy_summary_phrase(text: str) -> str:
+    keywords = spacy_keywords(text, max_keywords=3)
+    # If fewer than 3 keywords, fill with blanks or join as is
+    phrase = " ".join(keywords)
+    return phrase
+
+# Example usage:
+#text = "spaCy is a popular library for efficient Natural Language Processing in Python."
+#print(spacy_summary_phrase(text))  # Possible output: 'library spacy language'
 

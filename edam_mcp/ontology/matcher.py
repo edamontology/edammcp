@@ -2,6 +2,7 @@
 
 import logging
 import os
+from enum import Enum
 
 import numpy as np
 
@@ -9,8 +10,6 @@ from ..config import settings
 from ..models.responses import ConceptMatch
 from ..utils.text_processing import preprocess_text
 from .loader import OntologyLoader
-
-from enum import Enum
 
 logger = logging.getLogger(__name__)
 

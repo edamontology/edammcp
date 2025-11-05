@@ -39,16 +39,24 @@ class ConceptMatcher:
             return
 
         if self.embedding_model is None:
+            # If none is defined 'all-MiniLM-L6-v2' is set
             self.embedding_model = SentenceTransformer(settings.embedding_model)
 
         if self.use_chromadb:
             try:
                 import chromadb
+                from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
             except ImportError:
                 logger.error("chromadb not available. Install with: pip install chromadb")
                 return
             client = chromadb.PersistentClient(path=self.chroma_db)
-            collection = client.get_or_create_collection(name="concept_embeddings")
+            # Further details at: https://docs.trychroma.com/docs/collections/configure#hnsw-index-configuration
+            embedding_function = SentenceTransformerEmbeddingFunction(settings.embedding_model)
+            collection = client.get_or_create_collection(
+                name="concept_embeddings",
+                embedding_function=embedding_function,
+                configuration={"hnsw": {"space": "cosine", "ef_construction": 200}},
+            )
             logger.info("Building concept embeddings and storing in ChromaDB...")
         else:
             logger.info("Building concept embeddings and storing in memory...")

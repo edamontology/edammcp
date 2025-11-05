@@ -9,7 +9,9 @@ from fastmcp.server import Context
 from .config import settings
 from .models.requests import MappingRequest, SuggestionRequest
 from .models.responses import MappingResponse, SuggestionResponse
+from .models.workflow import WorkflowSummaryRequest, WorkflowSummaryResponse
 from .tools import map_to_edam_concept, map_to_edam_operation, suggest_new_concept
+from .tools.workflow import get_workflow_summary
 
 # Configure logging
 logging.basicConfig(
@@ -29,7 +31,11 @@ def create_server() -> FastMCP:
     # Create server
     mcp = FastMCP("edam-mcp")
 
-    # Register tools using decorators
+    @mcp.tool
+    async def get_workflow_summary_tool(request: WorkflowSummaryRequest, context: Context) -> WorkflowSummaryResponse:
+        """Get comprehensive summary of the EDAM mapping workflow for copilot planning."""
+        return await get_workflow_summary(request, context)
+
     @mcp.tool
     async def map_to_edam_concept_tool(request: MappingRequest, context: Context) -> MappingResponse:
         return await map_to_edam_concept(request, context)

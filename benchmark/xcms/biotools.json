@@ -1,0 +1,265 @@
+{
+  "name": "xcms",
+  "description": "Framework for processing and visualization of chromatographically separated and single-spectra mass spectral data.  The packages enables imports from AIA/ANDI NetCDF, mzXML, mzData and mzML files and preprocesses data for high-throughput, untargeted analyte profiling.",
+  "homepage": "http://bioconductor.org/packages/release/bioc/html/xcms.html",
+  "biotoolsID": "xcms",
+  "biotoolsCURIE": "biotools:xcms",
+  "version": [
+    "3.0.2"
+  ],
+  "relation": [
+    {
+      "biotoolsID": "ramclustr",
+      "type": "usedBy"
+    },
+    {
+      "biotoolsID": "camera",
+      "type": "usedBy"
+    },
+    {
+      "biotoolsID": "workflow4metabolomics",
+      "type": "usedBy"
+    }
+  ],
+  "function": [
+    {
+      "operation": [
+        {
+          "uri": "http://edamontology.org/operation_3694",
+          "term": "Mass spectrum visualisation"
+        },
+        {
+          "uri": "http://edamontology.org/operation_3634",
+          "term": "Label-free quantification"
+        },
+        {
+          "uri": "http://edamontology.org/operation_2428",
+          "term": "Validation"
+        },
+        {
+          "uri": "http://edamontology.org/operation_3628",
+          "term": "Chromatographic alignment"
+        },
+        {
+          "uri": "http://edamontology.org/operation_3215",
+          "term": "Peak detection"
+        },
+        {
+          "uri": "http://edamontology.org/operation_3203",
+          "term": "Chromatogram visualisation"
+        },
+        {
+          "uri": "http://edamontology.org/operation_3695",
+          "term": "Data filtering"
+        }
+      ],
+      "input": [
+        {
+          "data": {
+            "uri": "http://edamontology.org/data_2536",
+            "term": "Mass spectrometry data"
+          },
+          "format": [
+            {
+              "uri": "http://edamontology.org/format_3650",
+              "term": "NetCDF"
+            },
+            {
+              "uri": "http://edamontology.org/format_3244",
+              "term": "mzML"
+            },
+            {
+              "uri": "http://edamontology.org/format_3654",
+              "term": "mzXML"
+            }
+          ]
+        },
+        {
+          "data": {
+            "uri": "http://edamontology.org/data_0943",
+            "term": "Mass spectrometry spectra"
+          },
+          "format": [
+            {
+              "uri": "http://edamontology.org/format_3650",
+              "term": "NetCDF"
+            },
+            {
+              "uri": "http://edamontology.org/format_3244",
+              "term": "mzML"
+            },
+            {
+              "uri": "http://edamontology.org/format_3654",
+              "term": "mzXML"
+            }
+          ]
+        }
+      ],
+      "output": [
+        {
+          "data": {
+            "uri": "http://edamontology.org/data_2536",
+            "term": "Mass spectrometry data"
+          },
+          "format": [
+            {
+              "uri": "http://edamontology.org/format_3650",
+              "term": "NetCDF"
+            },
+            {
+              "uri": "http://edamontology.org/format_3248",
+              "term": "mzQuantML"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "toolType": [
+    "Command-line tool",
+    "Library",
+    "Web application"
+  ],
+  "topic": [
+    {
+      "uri": "http://edamontology.org/topic_3383",
+      "term": "Biological imaging"
+    },
+    {
+      "uri": "http://edamontology.org/topic_0092",
+      "term": "Data visualisation"
+    },
+    {
+      "uri": "http://edamontology.org/topic_3172",
+      "term": "Metabolomics"
+    }
+  ],
+  "operatingSystem": [
+    "Linux",
+    "Windows",
+    "Mac"
+  ],
+  "language": [
+    "R"
+  ],
+  "license": "GPL-2.0",
+  "collectionID": [
+    "BioConductor",
+    "Bioconda",
+    "Galaxy Tools"
+  ],
+  "maturity": "Mature",
+  "accessibility": "Open access",
+  "elixirNode": [
+    "Germany",
+    "France",
+    "Czech Republic"
+  ],
+  "elixirCommunity": [
+    "Metabolomics"
+  ],
+  "link": [
+    {
+      "url": "http://metlin.scripps.edu/download/",
+      "type": [
+        "Mirror"
+      ]
+    },
+    {
+      "url": "https://github.com/sneumann/xcms",
+      "type": [
+        "Repository"
+      ],
+      "note": "Link to the repository hosting the R code."
+    },
+    {
+      "url": "https://usegalaxy.eu/root?tool_id=toolshed.g2.bx.psu.edu/repos/lecorguille/xcms_xcmsset/abims_xcms_xcmsSet/3.12.0+galaxy1",
+      "type": [
+        "Galaxy service"
+      ]
+    }
+  ],
+  "download": [
+    {
+      "url": "http://bioconductor/packages/release/bioc/src/contrib/xcms_1.50.1.tar.gz",
+      "type": "Source code"
+    },
+    {
+      "url": "https://github.com/sneumann/xcms",
+      "type": "Source code"
+    }
+  ],
+  "documentation": [
+    {
+      "url": "http://bioconductor.org/packages/release/bioc/html/xcms.html",
+      "type": [
+        "User manual"
+      ]
+    },
+    {
+      "url": "https://training.galaxyproject.org/training-material/topics/metabolomics/tutorials/lcms-preprocessing/tutorial.html",
+      "type": [
+        "Training material"
+      ],
+      "note": "Galaxy training material for LC-MS data preprocessing with XCMS"
+    },
+    {
+      "url": "https://training.galaxyproject.org/training-material/topics/metabolomics/tutorials/gc_ms_with_xcms/tutorial.html",
+      "type": [
+        "Training material"
+      ],
+      "note": "Galaxy training for GC-MS data preprocessing with XCMS"
+    },
+    {
+      "url": "https://jorainer.github.io/xcmsTutorials/",
+      "type": [
+        "Training material"
+      ],
+      "note": "Tutorial on using the XCMS R library"
+    }
+  ],
+  "publication": [
+    {
+      "doi": "10.1093/bioinformatics/btq441",
+      "pmid": "20671148",
+      "type": [
+        "Primary"
+      ],
+      "metadata": {
+        "title": "Correction of mass calibration gaps in liquid chromatography-mass spectrometry metabolomics data",
+        "abstract": "Motivation: High mass accuracy is an important goal in liquid chromatography-mass spectrometry experiments. Some manufacturers employ a mass calibration system that regularly switches between the analyte and a standard reference compound, and leads to gaps in the analyte data. We present a method for correction of such gaps in global molecular profiling applications such as metabolomics. We demonstrate that it improves peak detection and quantification, successfully recovering the expected number of peaks and intensity distribution in an example metabolomics dataset. © The Author 2010. Published by Oxford University Press. All rights reserved.",
+        "date": "2010-07-29T00:00:00Z",
+        "citationCount": 159,
+        "authors": [
+          {
+            "name": "Benton H.P."
+          },
+          {
+            "name": "Want E.J."
+          },
+          {
+            "name": "Ebbels T.M.D."
+          }
+        ],
+        "journal": "Bioinformatics"
+      }
+    }
+  ],
+  "credit": [
+    {
+      "name": "Steffen Neumann",
+      "email": "sneumann@ipb-halle.de",
+      "orcidid": "https://orcid.org/0000-0002-7899-7192",
+      "typeEntity": "Person",
+      "typeRole": [
+        "Primary contact"
+      ]
+    }
+  ],
+  "owner": "bioconductor_import",
+  "additionDate": "2017-01-17T15:04:54Z",
+  "lastUpdate": "2025-06-17T13:07:05.749022Z",
+  "validated": 1,
+  "homepage_status": 0,
+  "elixir_badge": 0
+}

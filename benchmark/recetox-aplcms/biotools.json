@@ -1,0 +1,167 @@
+{
+  "name": "recetox-aplcms",
+  "description": "recetox-aplcms is a tool for peak detection in mass spectrometry data. The tool performs (1) noise removal, (2) peak detection, (3) retention time drift correction, (4) peak alignment and (5) weaker signal recovery as well as (6) suspect screening.",
+  "homepage": "https://github.com/RECETOX/recetox-aplcms",
+  "biotoolsID": "recetox-aplcms",
+  "biotoolsCURIE": "biotools:recetox-aplcms",
+  "version": [
+    "0.11.0"
+  ],
+  "relation": [
+    {
+      "biotoolsID": "aplcms",
+      "type": "isNewVersionOf"
+    }
+  ],
+  "function": [
+    {
+      "operation": [
+        {
+          "uri": "http://edamontology.org/operation_2928",
+          "term": "Alignment"
+        },
+        {
+          "uri": "http://edamontology.org/operation_3799",
+          "term": "Quantification"
+        },
+        {
+          "uri": "http://edamontology.org/operation_3628",
+          "term": "Chromatographic alignment"
+        },
+        {
+          "uri": "http://edamontology.org/operation_3215",
+          "term": "Peak detection"
+        },
+        {
+          "uri": "http://edamontology.org/operation_3937",
+          "term": "Feature extraction"
+        }
+      ],
+      "input": [
+        {
+          "data": {
+            "uri": "http://edamontology.org/data_2536",
+            "term": "Mass spectrometry data"
+          },
+          "format": [
+            {
+              "uri": "http://edamontology.org/format_3244",
+              "term": "mzML"
+            }
+          ]
+        }
+      ],
+      "output": [
+        {
+          "data": {
+            "uri": "http://edamontology.org/data_2603",
+            "term": "Expression data"
+          },
+          "format": [
+            {
+              "uri": "http://edamontology.org/format_2333",
+              "term": "Binary format"
+            }
+          ]
+        },
+        {
+          "data": {
+            "uri": "http://edamontology.org/data_1270",
+            "term": "Feature table"
+          },
+          "format": [
+            {
+              "uri": "http://edamontology.org/format_2333",
+              "term": "Binary format"
+            }
+          ]
+        },
+        {
+          "data": {
+            "uri": "http://edamontology.org/data_1916",
+            "term": "Alignment"
+          },
+          "format": [
+            {
+              "uri": "http://edamontology.org/format_2333",
+              "term": "Binary format"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "toolType": [
+    "Library",
+    "Web service"
+  ],
+  "topic": [
+    {
+      "uri": "http://edamontology.org/topic_3172",
+      "term": "Metabolomics"
+    }
+  ],
+  "operatingSystem": [
+    "Linux",
+    "Mac"
+  ],
+  "language": [
+    "R"
+  ],
+  "license": "GPL-2.0",
+  "maturity": "Emerging",
+  "cost": "Free of charge",
+  "accessibility": "Open access",
+  "elixirCommunity": [
+    "Metabolomics"
+  ],
+  "link": [
+    {
+      "url": "https://umsa.cerit-sc.cz/root?tool_id=toolshed.g2.bx.psu.edu/repos/recetox/recetox_aplcms_generate_feature_table/recetox_aplcms_generate_feature_table/0.11.0+galaxy1",
+      "type": [
+        "Galaxy service"
+      ]
+    },
+    {
+      "url": "https://github.com/RECETOX/recetox-aplcms",
+      "type": [
+        "Repository"
+      ]
+    }
+  ],
+  "download": [
+    {
+      "url": "https://github.com/RECETOX/recetox-aplcms",
+      "type": "Source code"
+    },
+    {
+      "url": "https://bioconda.github.io/recipes/r-recetox-aplcms/README.html",
+      "type": "Software package"
+    },
+    {
+      "url": "https://github.com/RECETOX/galaxytools/tree/master/tools/recetox_aplcms",
+      "type": "Tool wrapper (Galaxy)"
+    }
+  ],
+  "credit": [
+    {
+      "name": "RECETOX SpecDatRI",
+      "url": "https://www.recetox.muni.cz/en/services/data-services-1/spectrometric-data-processing-and-analysis",
+      "typeRole": [
+        "Maintainer",
+        "Provider",
+        "Primary contact",
+        "Developer"
+      ]
+    }
+  ],
+  "owner": "recetox-specdatri",
+  "additionDate": "2023-06-16T12:32:16.082467Z",
+  "lastUpdate": "2025-11-04T10:13:54.961114Z",
+  "editPermission": {
+    "type": "public"
+  },
+  "validated": 0,
+  "homepage_status": 0,
+  "elixir_badge": 0
+}

@@ -67,6 +67,7 @@ async def map_to_edam_concept(request: MappingRequest, context: Context) -> Mapp
         context.error(f"Error in concept mapping: {e}")
         raise
 
+
 async def map_to_edam_operation(request: MappingRequest, context: Context) -> MappingResponse:
     """Map a description to existing EDAM operations (i.e. bioinformatics data processing tasks).
 
@@ -116,7 +117,7 @@ async def map_to_edam_operation(request: MappingRequest, context: Context) -> Ma
         )
 
         context.info(f"Found {len(matches)} semantic matches")
-        
+
         return MappingResponse(
             matches=matches,
             total_matches=len(matches),
@@ -124,7 +125,7 @@ async def map_to_edam_operation(request: MappingRequest, context: Context) -> Ma
             confidence_threshold=request.min_confidence,
         )
 
-    except Exception as e:  
+    except Exception as e:
         context.error(f"Error in concept mapping: {e}")
         raise
 

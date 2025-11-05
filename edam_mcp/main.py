@@ -39,7 +39,7 @@ def create_server() -> FastMCP:
     @mcp.tool
     async def map_to_edam_concept_tool(request: MappingRequest, context: Context) -> MappingResponse:
         return await map_to_edam_concept(request, context)
-    
+
     @mcp.tool
     async def map_to_edam_operation_tool(request: MappingRequest, context: Context) -> MappingResponse:
         return await map_to_edam_operation(request, context)

@@ -13,6 +13,7 @@ from .loader import OntologyLoader
 
 logger = logging.getLogger(__name__)
 
+
 # define enum for EDAM concept types
 class EDAMConceptType(Enum):
     TOPIC = "Topic"
@@ -20,6 +21,7 @@ class EDAMConceptType(Enum):
     DATA = "Data"
     FORMAT = "Format"
     ANY = "Any"
+
 
 class ConceptMatcher:
     """Handles semantic matching of descriptions to EDAM concepts."""
@@ -201,7 +203,9 @@ class ConceptMatcher:
         matches.sort(key=lambda x: x.confidence, reverse=True)
         return matches[:max_results]
 
-    def _calculate_similarities(self, description_embedding: np.ndarray, concept_type: EDAMConceptType, max_results: int) -> list[tuple[str, float]]:
+    def _calculate_similarities(
+        self, description_embedding: np.ndarray, concept_type: EDAMConceptType, max_results: int
+    ) -> list[tuple[str, float]]:
         """Calculate cosine similarities between description and all concepts.
 
         Args:

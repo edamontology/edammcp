@@ -9,7 +9,7 @@ from fastmcp.server import Context
 from .config import settings
 from .models.requests import MappingRequest, SuggestionRequest
 from .models.responses import MappingResponse, SuggestionResponse
-from .tools import map_to_edam_concept, suggest_new_concept
+from .tools import map_to_edam_concept, map_to_edam_operation, suggest_new_concept
 
 # Configure logging
 logging.basicConfig(
@@ -33,6 +33,10 @@ def create_server() -> FastMCP:
     @mcp.tool
     async def map_to_edam_concept_tool(request: MappingRequest, context: Context) -> MappingResponse:
         return await map_to_edam_concept(request, context)
+    
+    @mcp.tool
+    async def map_to_edam_operation_tool(request: MappingRequest, context: Context) -> MappingResponse:
+        return await map_to_edam_operation(request, context)
 
     @mcp.tool
     async def suggest_new_concept_tool(request: SuggestionRequest, context: Context) -> SuggestionResponse:

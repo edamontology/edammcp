@@ -8,14 +8,28 @@ class MappingRequest(BaseModel):
 
     description: str = Field(
         ...,
-        description="Text description or metadata to map to EDAM concepts",
+        description=(
+            "REQUIRED: A description of the concept, operation, data type, format, or topic "
+            "to map to EDAM ontology terms. "
+            "You MUST extract this from the user's question or context. "
+            "Look for descriptive text after colons, dashes, or in the question itself. "
+            "Examples: 'graphical inspection of spectral data', 'mass spectrometry data', "
+            "'quantitative analysis without internal standards'. "
+            "If the user's question contains a description (e.g., after '—' or ':'), "
+            "use that text as the description. "
+            "This field is REQUIRED and cannot be empty."
+        ),
         min_length=1,
         max_length=10000,
     )
 
     context: str | None = Field(
         None,
-        description="Additional context about the description (e.g., tool name, domain)",
+        description=(
+            "OPTIONAL: Additional context about the description to help with mapping. "
+            "Examples: 'tool name', 'domain', 'related terms'. "
+            "This field is OPTIONAL and can be empty."
+        ),
         max_length=2000,
     )
 

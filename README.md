@@ -72,7 +72,7 @@ uv run edam-mcp
 
 ### Using with MCP Clients
 
-The server exposes three main tools:
+The server exposes four main tools:
 
 1. **`map_to_edam_concept`** - Maps descriptions to existing EDAM concepts
    - **Input**: Description text, context, confidence threshold
@@ -84,7 +84,12 @@ The server exposes three main tools:
    - **Output**: List of suggested new concepts with hierarchical placement
    - **Example**: "quantum protein folding" → "Quantum Protein Folding" (suggested as child of "Sequence alignment")
 
-3. **`get_workflow_summary`** - Get comprehensive summary of the EDAM mapping workflow for copilot planning
+3. **`segment_text`** - Segment text into topic and keywords using NLP
+   - **Input**: Raw text to be segmented
+   - **Output**: Topic summary and list of keywords extracted from the text
+   - **Example**: "spaCy is a popular library for efficient Natural Language Processing" → topic: "library spacy language", keywords: ["spacy", "library", "natural language processing"]
+
+4. **`get_workflow_summary`** - Get comprehensive summary of the EDAM mapping workflow for copilot planning
    - **Input**: (No parameters required)
    - **Output**: Workflow summary with available functions and their descriptions
 

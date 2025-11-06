@@ -7,8 +7,8 @@ from fastmcp import FastMCP
 from fastmcp.server import Context
 
 from .config import settings
-from .models.requests import MappingRequest, SuggestionRequest
-from .models.responses import MappingResponse, SuggestionResponse
+from .models.mapping import MappingRequest, MappingResponse
+from .models.suggestion import SuggestionRequest, SuggestionResponse
 from .models.workflow import WorkflowSummaryRequest, WorkflowSummaryResponse
 from .tools import map_to_edam_concept, suggest_new_concept
 from .tools.workflow import get_workflow_summary

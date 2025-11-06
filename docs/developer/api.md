@@ -40,7 +40,7 @@ class ConceptMatch(BaseModel):
 
 ```python
 from edam_mcp.tools.mapping import map_to_edam_concept
-from edam_mcp.models.requests import MappingRequest
+from edam_mcp.models.mapping import MappingRequest
 
 # Create request
 request = MappingRequest(
@@ -95,7 +95,7 @@ class SuggestedConcept(BaseModel):
 
 ```python
 from edam_mcp.tools.suggestion import suggest_new_concept
-from edam_mcp.models.requests import SuggestionRequest
+from edam_mcp.models.suggestion import SuggestionRequest
 
 # Create request
 request = SuggestionRequest(

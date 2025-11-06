@@ -4,8 +4,8 @@ from fastmcp.server import Context
 
 # Import needed for the mapping attempt
 from ..config import settings
-from ..models.requests import MappingRequest, SuggestionRequest
-from ..models.responses import SuggestionResponse
+from ..models.mapping import MappingRequest
+from ..models.suggestion import SuggestionRequest, SuggestionResponse
 from ..ontology import ConceptMatcher, ConceptSuggester, OntologyLoader
 from ..utils.context import MockContext
 from .mapping import map_to_edam_concept

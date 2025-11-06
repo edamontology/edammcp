@@ -4,8 +4,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from edam_mcp.models.requests import MappingRequest
-from edam_mcp.models.responses import ConceptMatch, MappingResponse
+from edam_mcp.models.mapping import ConceptMatch, MappingRequest, MappingResponse
 from edam_mcp.tools.mapping import map_description_to_concepts
 
 

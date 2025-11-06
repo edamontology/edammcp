@@ -1,37 +1,31 @@
-"""Response models for MCP tools."""
+"""Models for EDAM concept suggestion functionality."""
 
 from pydantic import BaseModel, Field
 
 
-class ConceptMatch(BaseModel):
-    """Represents a matched EDAM concept with confidence score."""
+class SuggestionRequest(BaseModel):
+    """Request model for suggesting new EDAM concepts."""
 
-    concept_uri: str = Field(..., description="URI of the matched EDAM concept")
-
-    concept_label: str = Field(..., description="Human-readable label of the concept")
-
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score for the match (0.0 to 1.0)")
-
-    concept_type: str = Field(
+    description: str = Field(
         ...,
-        description="Type of the concept (Operation, Data, Format, Topic, Identifier)",
+        description="Description of the concept that needs to be suggested",
+        min_length=1,
+        max_length=10000,
     )
 
-    definition: str | None = Field(None, description="Definition of the concept")
+    concept_type: str | None = Field(
+        None,
+        description="Type of concept (e.g., 'Operation', 'Data', 'Format', 'Topic')",
+        pattern="^(Operation|Data|Format|Topic|Identifier)$",
+    )
 
-    synonyms: list[str] = Field(default_factory=list, description="List of synonyms for the concept")
+    parent_concept: str | None = Field(None, description="Suggested parent concept URI or label", max_length=500)
 
-
-class MappingResponse(BaseModel):
-    """Response model for concept mapping results."""
-
-    matches: list[ConceptMatch] = Field(..., description="List of matched concepts ordered by confidence")
-
-    total_matches: int = Field(..., description="Total number of matches found")
-
-    has_exact_match: bool = Field(..., description="Whether an exact match was found")
-
-    confidence_threshold: float = Field(..., description="Confidence threshold used for filtering")
+    rationale: str | None = Field(
+        None,
+        description="Rationale for why this concept should be added",
+        max_length=2000,
+    )
 
 
 class SuggestedConcept(BaseModel):
@@ -62,3 +56,4 @@ class SuggestionResponse(BaseModel):
     mapping_attempted: bool = Field(..., description="Whether concept mapping was attempted first")
 
     mapping_failed_reason: str | None = Field(None, description="Reason why mapping failed (if applicable)")
+

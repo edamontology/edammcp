@@ -1,0 +1,91 @@
+refactor(models): reorganize models by functionality and improve segmentation API
+
+This commit refactors the models submodule to organize models by functionality
+rather than by request/response type, making the codebase more intuitive and
+maintainable. It also introduces a proper request/response pattern for the
+segmentation functionality and renames fields for better clarity.
+
+BREAKING CHANGES:
+- Models are now organized by feature (mapping, suggestion, segmentation, workflow)
+- ReadyForMapping renamed to SegmentationResponse
+- SegmentationResponse fields renamed: top_concept -> topic, chunks -> keywords
+- segment_text() now requires SegmentationRequest instead of raw string
+
+Model Organization:
+- Created edam_mcp/models/mapping.py
+  * Contains MappingRequest, MappingResponse, and ConceptMatch
+  * All mapping-related models grouped together
+  
+- Created edam_mcp/models/suggestion.py
+  * Contains SuggestionRequest, SuggestionResponse, and SuggestedConcept
+  * All suggestion-related models grouped together
+  
+- Created edam_mcp/models/segmentation.py
+  * Contains SegmentationRequest and SegmentationResponse
+  * Replaces the old segment.py file
+  
+- Deleted edam_mcp/models/requests.py
+  * MappingRequest and SuggestionRequest moved to their respective modules
+  
+- Deleted edam_mcp/models/responses.py
+  * All response models moved to their respective feature modules
+  
+- Deleted edam_mcp/models/segment.py
+  * Replaced by segmentation.py with improved naming
+
+Segmentation API Improvements:
+- Added SegmentationRequest model
+  * Contains single 'text' field with validation (min_length=1)
+  * Follows consistent naming convention with other request models
+  
+- Renamed ReadyForMapping to SegmentationResponse
+  * More descriptive name that clearly indicates it's a response model
+  
+- Renamed SegmentationResponse fields:
+  * top_concept -> topic (more concise and clear)
+  * chunks -> keywords (more accurate description of content)
+
+Code Updates:
+- Updated all imports across codebase:
+  * edam_mcp/main.py
+  * edam_mcp/tools/mapping.py
+  * edam_mcp/tools/suggestion.py
+  * edam_mcp/tools/segment_text.py
+  * edam_mcp/tools/workflow.py
+  * edam_mcp/ontology/matcher.py
+  * edam_mcp/ontology/suggester.py
+  * tests/test_mapping.py
+  * tests/test_segment.py
+  * examples/basic_seg.py
+  * examples/simple_test.py
+
+- Updated edam_mcp/models/__init__.py
+  * Exports all models from new locations
+  * Maintains backward compatibility through __all__ exports
+
+- Updated segment_text() function signature
+  * Now accepts SegmentationRequest instead of raw string
+  * Improved type safety and consistency with other tools
+
+Documentation:
+- Updated docs/developer/architecture.md
+  * Documented new model organization structure
+  * Added SegmentationRequest to model listings
+  
+- Updated docs/developer/api.md
+  * Updated import examples to use new module paths
+  * Reflects new segmentation API structure
+
+Testing:
+- Updated all test cases to use SegmentationRequest
+- Added test_segment_text_empty_validation() to verify Pydantic validation
+- Renamed test_segment_text_empty() to test_segment_text_minimal()
+- All 32 tests passing
+
+Benefits:
+- Improved code organization: related models grouped together
+- Better discoverability: easier to find models for a specific feature
+- Consistent naming: all features follow {Feature}Request/{Feature}Response pattern
+- Enhanced type safety: segmentation now uses proper request model
+- Clearer field names: topic and keywords are more intuitive than top_concept and chunks
+

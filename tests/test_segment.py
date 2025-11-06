@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 import spacy
 
-from edam_mcp.models.segment import ReadyForMapping
+from edam_mcp.models.segmentation import SegmentationRequest, SegmentationResponse
 from edam_mcp.tools.segment_text import (
     extract_concepts,
     is_not_all_stopwords,
@@ -18,7 +18,7 @@ from edam_mcp.tools.segment_text import (
 from edam_mcp.utils.context import MockContext
 
 
-# Note: extract_concepts actually returns list[str], not ReadyForMapping
+# Note: extract_concepts actually returns list[str], not SegmentationResponse
 # despite the type hint. Tests reflect the actual behavior.
 
 
@@ -253,61 +253,69 @@ class TestSegmentText:
     @pytest.mark.asyncio
     async def test_segment_text_basic(self):
         """Test basic text segmentation."""
-        text = "Machine learning algorithms process data efficiently."
+        request = SegmentationRequest(text="Machine learning algorithms process data efficiently.")
         context = MockContext()
         
-        result = await segment_text(text, context)
+        result = await segment_text(request, context)
         
-        assert isinstance(result, ReadyForMapping)
-        assert isinstance(result.top_concept, str)
-        assert isinstance(result.chunks, list)
-        assert len(result.chunks) >= 0
+        assert isinstance(result, SegmentationResponse)
+        assert isinstance(result.topic, str)
+        assert isinstance(result.keywords, list)
+        assert len(result.keywords) >= 0
 
     @pytest.mark.asyncio
     async def test_segment_text_complex(self):
         """Test segmentation of complex text."""
-        text = "The chromVAR R package analyzes chromatin accessibility data from ATAC-seq experiments. It identifies transcription factor motifs associated with variability."
+        request = SegmentationRequest(text="The chromVAR R package analyzes chromatin accessibility data from ATAC-seq experiments. It identifies transcription factor motifs associated with variability.")
         context = MockContext()
         
-        result = await segment_text(text, context)
+        result = await segment_text(request, context)
         
-        assert isinstance(result, ReadyForMapping)
-        assert len(result.chunks) > 0
-        assert len(result.top_concept) > 0
+        assert isinstance(result, SegmentationResponse)
+        assert len(result.keywords) > 0
+        assert len(result.topic) > 0
 
     @pytest.mark.asyncio
-    async def test_segment_text_empty(self):
-        """Test segmentation of empty text."""
-        text = ""
+    async def test_segment_text_empty_validation(self):
+        """Test that empty text fails validation."""
+        from pydantic import ValidationError
+        
+        with pytest.raises(ValidationError):
+            SegmentationRequest(text="")
+
+    @pytest.mark.asyncio
+    async def test_segment_text_minimal(self):
+        """Test segmentation with minimal valid text."""
+        request = SegmentationRequest(text="a")
         context = MockContext()
         
-        result = await segment_text(text, context)
+        result = await segment_text(request, context)
         
-        assert isinstance(result, ReadyForMapping)
-        assert isinstance(result.chunks, list)
-        assert isinstance(result.top_concept, str)
+        assert isinstance(result, SegmentationResponse)
+        assert isinstance(result.keywords, list)
+        assert isinstance(result.topic, str)
 
     @pytest.mark.asyncio
     async def test_segment_text_structure(self):
         """Test that segment_text returns correct structure."""
-        text = "Natural language processing enables text analysis and understanding."
+        request = SegmentationRequest(text="Natural language processing enables text analysis and understanding.")
         context = MockContext()
         
-        result = await segment_text(text, context)
+        result = await segment_text(request, context)
         
-        # Verify structure matches ReadyForMapping model
-        assert hasattr(result, "top_concept")
-        assert hasattr(result, "chunks")
-        assert isinstance(result.top_concept, str)
-        assert isinstance(result.chunks, list)
-        assert all(isinstance(chunk, str) for chunk in result.chunks)
+        # Verify structure matches SegmentationResponse model
+        assert hasattr(result, "topic")
+        assert hasattr(result, "keywords")
+        assert isinstance(result.topic, str)
+        assert isinstance(result.keywords, list)
+        assert all(isinstance(keyword, str) for keyword in result.keywords)
 
     @pytest.mark.asyncio
     async def test_segment_text_error_handling(self):
         """Test error handling in segment_text."""
         # This test verifies that errors are properly caught and re-raised
         # We'll use a valid text but mock an error in extract_concepts
-        text = "Valid text for testing."
+        request = SegmentationRequest(text="Valid text for testing.")
         context = Mock()
         context.info = Mock()
         context.error = Mock()
@@ -316,7 +324,7 @@ class TestSegmentText:
             mock_extract.side_effect = Exception("Test error")
             
             with pytest.raises(Exception) as exc_info:
-                await segment_text(text, context)
+                await segment_text(request, context)
             
             assert "Test error" in str(exc_info.value)
             context.error.assert_called_once()

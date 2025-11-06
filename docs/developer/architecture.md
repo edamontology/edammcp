@@ -164,17 +164,28 @@ async def suggest_new_concept(
 
 Pydantic models for request/response validation and serialization.
 
-#### Request Models (`edam_mcp.models.requests`)
+#### Mapping Models (`edam_mcp.models.mapping`)
 
 - `MappingRequest` - Input for concept mapping
-- `SuggestionRequest` - Input for concept suggestion
-
-#### Response Models (`edam_mcp.models.responses`)
-
-- `ConceptMatch` - Individual concept match with confidence
 - `MappingResponse` - Complete mapping results
-- `SuggestedConcept` - New concept suggestion
+- `ConceptMatch` - Individual concept match with confidence
+
+#### Suggestion Models (`edam_mcp.models.suggestion`)
+
+- `SuggestionRequest` - Input for concept suggestion
 - `SuggestionResponse` - Complete suggestion results
+- `SuggestedConcept` - New concept suggestion
+
+#### Segmentation Models (`edam_mcp.models.segmentation`)
+
+- `SegmentationRequest` - Input for text segmentation (raw text)
+- `SegmentationResponse` - Segmented text with topic and keywords
+
+#### Workflow Models (`edam_mcp.models.workflow`)
+
+- `WorkflowSummaryRequest` - Request for workflow summary
+- `WorkflowSummaryResponse` - Complete workflow information
+- `WorkflowFunction` - Description of a workflow function
 
 ### 5. Utilities (`edam_mcp.utils`)
 

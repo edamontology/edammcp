@@ -9,7 +9,7 @@ from fastmcp.server import Context
 from spacy import cli
 from spacy.lang.en.stop_words import STOP_WORDS
 
-from ..models.segment import ReadyForMapping
+from ..models.segmentation import SegmentationRequest, SegmentationResponse
 
 
 def load_spacy_model(model_name: str = "en_core_web_sm") -> spacy.language.Language:
@@ -48,7 +48,7 @@ def is_not_all_stopwords(phrase: str, nlp: spacy.language.Language) -> bool:
     return any(not token.is_stop and not token.is_punct for token in doc)
 
 
-def extract_concepts(text: str) -> ReadyForMapping:
+def extract_concepts(text: str) -> SegmentationResponse:
     #
     # use NLP
     #
@@ -63,31 +63,31 @@ def extract_concepts(text: str) -> ReadyForMapping:
     return concepts
 
 
-async def segment_text(request: str, context: Context) -> ReadyForMapping:
+async def segment_text(request: SegmentationRequest, context: Context) -> SegmentationResponse:
     """Convert free text to a JSON document with a list of concepts enumerated using spacy nlp
 
     This tool takes a free text string and produces a 'segmentation'
     based on key concepts, eliminating stopwords.
 
     Args:
-        request: free text string
+        request: Segmentation request containing text to segment
         context: MCP context for logging and progress reporting.
 
     Returns:
-        JSON document
+        Segmentation response with topic and keywords
     """
     try:
         # Log the request
-        context.info(f"Mapping description: {request[:100]}...")
+        context.info(f"Segmenting text: {request.text[:100]}...")
 
-        concepts = extract_concepts(request)
-        top_concept = spacy_summary_phrase(request)
+        concepts = extract_concepts(request.text)
+        topic = spacy_summary_phrase(request.text)
 
         context.info(f"Found {len(concepts)} conceptual segments")
 
         print(concepts)
-        print(top_concept)
-        return ReadyForMapping(top_concept=top_concept, chunks=concepts)
+        print(topic)
+        return SegmentationResponse(topic=topic, keywords=concepts)
 
     except Exception as e:
         context.error(f"Error in segment_text: {e}")

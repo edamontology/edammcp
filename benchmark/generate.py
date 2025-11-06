@@ -32,7 +32,7 @@ conversation = GeminiConversation(
     prompts={},
 )
 
-conversation.set_api_key(api_key="AIzaSyDpyUseyxke_e_In9A-0dcZ_RFYmRf6Gr8")
+conversation.set_api_key(api_key="")
 
 instructions = """
 You are assisting in creating question-answer pairs for an MCP benchmark.

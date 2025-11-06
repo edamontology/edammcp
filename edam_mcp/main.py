@@ -7,10 +7,12 @@ from fastmcp import FastMCP
 from fastmcp.server import Context
 
 from .config import settings
-from .models.requests import MappingRequest, SuggestionRequest
-from .models.responses import MappingResponse, SuggestionResponse
+from .models.mapping import MappingRequest, MappingResponse
+from .models.segmentation import SegmentationRequest, SegmentationResponse
+from .models.suggestion import SuggestionRequest, SuggestionResponse
 from .models.workflow import WorkflowSummaryRequest, WorkflowSummaryResponse
 from .tools import map_to_edam_concept, suggest_new_concept
+from .tools.segment_text import segment_text
 from .tools.workflow import get_workflow_summary
 
 # Configure logging
@@ -35,6 +37,11 @@ def create_server() -> FastMCP:
     async def get_workflow_summary_tool(request: WorkflowSummaryRequest, context: Context) -> WorkflowSummaryResponse:
         """Get comprehensive summary of the EDAM mapping workflow for copilot planning."""
         return await get_workflow_summary(request, context)
+
+    @mcp.tool
+    async def segment_text_tool(request: SegmentationRequest, context: Context) -> SegmentationResponse:
+        """Segment text into topic and keywords using NLP (spaCy)."""
+        return await segment_text(request, context)
 
     @mcp.tool
     async def map_to_edam_concept_tool(request: MappingRequest, context: Context) -> MappingResponse:

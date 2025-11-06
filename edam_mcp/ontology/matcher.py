@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 from ..config import settings
-from ..models.responses import ConceptMatch
+from ..models.mapping import ConceptMatch
 from ..utils.text_processing import preprocess_text
 from .loader import OntologyLoader
 

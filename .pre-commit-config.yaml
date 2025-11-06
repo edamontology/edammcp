@@ -9,4 +9,7 @@ repos:
           - --show-files
           - --show-fixes
           - --verbose
-      - id: ruff-format # formatter
+      - id: ruff-format
+        args:
+          - --diff
+          - --exit-non-zero-on-fix

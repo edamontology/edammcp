@@ -1,9 +1,10 @@
 # EDAM MCP Server
 
-An MCP (Model Context Protocol) server for EDAM ontology mapping and concept suggestion. This server provides tools to:
+An MCP (Model Context Protocol) server for EDAM ontology mapping, concept suggestion, and text segmentation. This server provides tools to:
 
-1. **Map descriptions to EDAM concepts**: Given metadata or free text descriptions, find the most appropriate EDAM ontology concepts with confidence scores
-2. **Suggest new concepts**: When no suitable concept exists, suggest new concepts that could be integrated into the EDAM ontology
+1. **Map descriptions to EDAM concepts**: Find the most appropriate EDAM ontology concepts for metadata or free text descriptions with confidence scores
+2. **Suggest new concepts**: Generate suggestions for new EDAM concepts when no suitable match exists
+3. **Segment text**: Extract topics and keywords from text for improved mapping accuracy
 
 Documentation [here](https://edamontology.github.io/edammcp/).
 
@@ -38,6 +39,9 @@ uv run python examples/basic_usage_mapper.py
 # Run the suggester
 uv run python examples/basic_usage_suggester.py
 
+# Run the segmentation example
+uv run python examples/basic_seg.py
+
 # Start the MCP server
 uv run edam-mcp
 ```
@@ -52,23 +56,7 @@ For examples on how to run the functions, please check [basic-usage.md](/docs/ex
 - **Confidence Scoring**: Provide confidence levels for mapping results
 - **Concept Suggestion**: Generate suggestions for new EDAM concepts when no match is found
 - **Hierarchical Placement**: Suggest appropriate placement within the EDAM ontology hierarchy
-
-## Installation
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd edammcp
-
-# Install with uv (recommended)
-uv sync
-
-# Or install in development mode
-uv sync --dev
-
-# Or install with specific extras
-uv sync --extra dev
-```
+- **Text Segmentation**: Segment and analyze text to extract topics and keywords for mapping
 
 ## Usage
 
@@ -84,7 +72,7 @@ uv run edam-mcp
 
 ### Using with MCP Clients
 
-The server exposes two main tools:
+The server exposes three main tools:
 
 1. **`map_to_edam_concept`** - Maps descriptions to existing EDAM concepts
    - **Input**: Description text, context, confidence threshold
@@ -95,6 +83,10 @@ The server exposes two main tools:
    - **Input**: Description text, concept type, parent concept
    - **Output**: List of suggested new concepts with hierarchical placement
    - **Example**: "quantum protein folding" → "Quantum Protein Folding" (suggested as child of "Sequence alignment")
+
+3. **`get_workflow_summary`** - Get comprehensive summary of the EDAM mapping workflow for copilot planning
+   - **Input**: (No parameters required)
+   - **Output**: Workflow summary with available functions and their descriptions
 
 ### MCP Client Integration
 
@@ -145,10 +137,12 @@ edam_mcp/
 ├── __init__.py
 ├── main.py                 # Main server entry point
 ├── config.py              # Configuration management
-├── models/                # Pydantic models
+├── models/                # Pydantic models (organized by functionality)
 │   ├── __init__.py
-│   ├── requests.py        # Request models
-│   └── responses.py       # Response models
+│   ├── mapping.py         # Mapping request/response models
+│   ├── suggestion.py      # Suggestion request/response models
+│   ├── segmentation.py   # Text segmentation models
+│   └── workflow.py        # Workflow summary models
 ├── ontology/              # EDAM ontology handling
 │   ├── __init__.py
 │   ├── loader.py          # Ontology loading and parsing
@@ -157,9 +151,12 @@ edam_mcp/
 ├── tools/                 # MCP tools
 │   ├── __init__.py
 │   ├── mapping.py         # Mapping tool implementation
-│   └── suggestion.py      # Suggestion tool implementation
+│   ├── suggestion.py      # Suggestion tool implementation
+│   ├── segment_text.py    # Text segmentation tool
+│   └── workflow.py        # Workflow summary tool
 └── utils/                 # Utility functions
     ├── __init__.py
+    ├── context.py         # Context utilities
     ├── text_processing.py # Text preprocessing
     └── similarity.py      # Similarity calculation
 ```
@@ -183,9 +180,10 @@ uv run pre-commit run --all-files
 ### Adding new tools
 
 1. Create a new tool function in the appropriate module under `tools/`
-2. Register the tool in `main.py`
-3. Add corresponding request/response models in `models/`
-4. Write tests for the new functionality
+2. Create corresponding request/response models in `models/` (organized by functionality)
+3. Register the tool in `main.py` using the `@mcp.tool` decorator
+4. Export models in `models/__init__.py`
+5. Write tests for the new functionality
 
 ## Configuration
 

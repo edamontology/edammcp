@@ -56,4 +56,3 @@ class SuggestionResponse(BaseModel):
     mapping_attempted: bool = Field(..., description="Whether concept mapping was attempted first")
 
     mapping_failed_reason: str | None = Field(None, description="Reason why mapping failed (if applicable)")
-

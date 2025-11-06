@@ -19,4 +19,3 @@ class SegmentationResponse(BaseModel):
     topic: str = Field(..., description="Brief assertion on the topic of the input text")
 
     keywords: list[str] = Field(..., description="List of keywords derived from the input text")
-

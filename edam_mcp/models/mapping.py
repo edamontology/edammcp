@@ -53,4 +53,3 @@ class MappingResponse(BaseModel):
     has_exact_match: bool = Field(..., description="Whether an exact match was found")
 
     confidence_threshold: float = Field(..., description="Confidence threshold used for filtering")
-

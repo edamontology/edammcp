@@ -15,13 +15,13 @@ from ..models.segmentation import SegmentationRequest, SegmentationResponse
 def load_spacy_model(model_name: str = "en_core_web_sm") -> spacy.language.Language:
     """
     Load a spaCy model, attempting to download it if not found.
-    
+
     Args:
         model_name: Name of the spaCy model to load
-        
+
     Returns:
         Loaded spaCy language model
-        
+
     Raises:
         OSError: If the model cannot be loaded even after attempting to download
     """
@@ -35,8 +35,7 @@ def load_spacy_model(model_name: str = "en_core_web_sm") -> spacy.language.Langu
             return spacy.load(model_name)
         except Exception as download_error:
             raise OSError(
-                f"spaCy model '{model_name}' not found and could not be downloaded. "
-                f"Download error: {download_error}"
+                f"spaCy model '{model_name}' not found and could not be downloaded. Download error: {download_error}"
             ) from download_error
 
 

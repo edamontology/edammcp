@@ -146,6 +146,10 @@ class ConceptMatcher:
         else:
             logger.info(f"Built embeddings for {len(self.concept_embeddings)} concepts")
 
+        # Show the size of the embeddings dictionary
+        logger.info(f"Concept embeddings size: {len(self.concept_embeddings)}")
+        logger.info(f"Operation embeddings size: {len(self.operation_embeddings)}")
+
     def match_concepts(
         self,
         description: str,
@@ -245,9 +249,16 @@ class ConceptMatcher:
             similarity_scores = [1.0 - d for d in distances]
             similarities = list(zip(ids, similarity_scores))
         else:
-            for uri, concept_embedding in self.concept_embeddings.items():
-                similarity = self._cosine_similarity(description_embedding, concept_embedding)
-                similarities.append((uri, similarity))
+            if concept_type == EDAMConceptType.OPERATION:
+                logger.info("Calculating similarities using in-memory operation embeddings")
+                for uri, concept_embedding in self.operation_embeddings.items():
+                    similarity = self._cosine_similarity(description_embedding, concept_embedding)
+                    similarities.append((uri, similarity))
+            else:
+                logger.info("Calculating similarities using in-memory concept embeddings")
+                for uri, concept_embedding in self.concept_embeddings.items():
+                    similarity = self._cosine_similarity(description_embedding, concept_embedding)
+                    similarities.append((uri, similarity))
 
         similarities.sort(key=lambda x: x[1], reverse=True)
         return similarities

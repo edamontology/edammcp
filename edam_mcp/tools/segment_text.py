@@ -6,9 +6,38 @@ from string import punctuation
 
 import spacy
 from fastmcp.server import Context
+from spacy import cli
 from spacy.lang.en.stop_words import STOP_WORDS
 
 from ..models.segment import ReadyForMapping
+
+
+def load_spacy_model(model_name: str = "en_core_web_sm") -> spacy.language.Language:
+    """
+    Load a spaCy model, attempting to download it if not found.
+    
+    Args:
+        model_name: Name of the spaCy model to load
+        
+    Returns:
+        Loaded spaCy language model
+        
+    Raises:
+        OSError: If the model cannot be loaded even after attempting to download
+    """
+    try:
+        return spacy.load(model_name)
+    except OSError:
+        # Try to download the model once
+        try:
+            cli.download(model_name)
+            # Try loading again after download
+            return spacy.load(model_name)
+        except Exception as download_error:
+            raise OSError(
+                f"spaCy model '{model_name}' not found and could not be downloaded. "
+                f"Download error: {download_error}"
+            ) from download_error
 
 
 def is_not_all_stopwords(phrase: str, nlp: spacy.language.Language) -> bool:
@@ -27,13 +56,7 @@ def extract_concepts(text: str) -> ReadyForMapping:
     Extracts non-redundant noun chunks from input text, excluding those comprised only of stop words or punctuation.
     Returns a list of concept-phrases sorted (longest first, then lexically).
     """
-    try:
-        nlp = spacy.load("en_core_web_sm")
-    except OSError as e:
-        print("spaCy model 'en_core_web_sm' not found or not installed.")
-        print("If pip is not available in your environment, you may need to add it first:")
-        print("    uv add pip")
-        raise e  # Optionally re-raise to halt execution
+    nlp = load_spacy_model()
     noun_chunks = set(chunk.text.strip() for chunk in nlp(text).noun_chunks)
     filtered = [phrase for phrase in noun_chunks if is_not_all_stopwords(phrase, nlp)]
     concepts = sorted(filtered, key=lambda x: (-len(x), x.lower()))
@@ -73,7 +96,7 @@ async def segment_text(request: str, context: Context) -> ReadyForMapping:
 
 # by perplexity
 def spacy_text_summary(text: str, num_sentences: int = 2) -> str:
-    nlp = spacy.load("en_core_web_sm")
+    nlp = load_spacy_model()
     doc = nlp(text)
 
     # Calculate word frequencies
@@ -104,7 +127,7 @@ def spacy_text_summary(text: str, num_sentences: int = 2) -> str:
 
 
 def spacy_keywords(text: str, max_keywords: int = 3) -> list[str]:
-    nlp = spacy.load("en_core_web_sm")
+    nlp = load_spacy_model()
     doc = nlp(text)
     words = [
         token.lemma_.lower()

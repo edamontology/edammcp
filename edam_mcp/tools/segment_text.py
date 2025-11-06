@@ -12,6 +12,7 @@ import json
 from spacy.lang.en.stop_words import STOP_WORDS
 from string import punctuation
 from heapq import nlargest
+from collections import Counter
 
 def is_not_all_stopwords(phrase: str, nlp: spacy.language.Language) -> bool:
     """

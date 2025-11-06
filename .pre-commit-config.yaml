@@ -10,6 +10,3 @@ repos:
           - --show-fixes
           - --verbose
       - id: ruff-format
-        args:
-          - --diff
-          - --exit-non-zero-on-fix

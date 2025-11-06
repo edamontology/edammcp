@@ -2,8 +2,8 @@
 
 from fastmcp.server import Context
 
-from ..ontology import ConceptMatcher, EDAMConceptType, OntologyLoader
 from ..models.mapping import MappingRequest, MappingResponse
+from ..ontology import ConceptMatcher, EDAMConceptType, OntologyLoader
 from ..utils.context import MockContext
 
 

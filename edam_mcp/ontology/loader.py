@@ -107,14 +107,20 @@ class OntologyLoader:
             logger.error("No EDAM OWL file loaded.")
             return
 
+        obsolete_count = 0
         for concept_uri in self.graph.subjects(RDF.type, OWL.Class):
             if not str(concept_uri).startswith(str(EDAM)):
                 continue
 
             concept_data = self._extract_concept_data(concept_uri)
             if concept_data:
-                self.concepts[str(concept_uri)] = concept_data
-                self.concept_types.add(concept_data["type"])
+                if not concept_data.get("obsolete", False):
+                    self.concepts[str(concept_uri)] = concept_data
+                    self.concept_types.add(concept_data["type"])
+                else:
+                    obsolete_count += 1
+
+        logger.info(f"Skipped {obsolete_count} obsolete concepts")
 
     def _extract_concept_data(self, concept_uri: URIRef) -> dict | None:
         """Extract data for a single concept.
@@ -141,6 +147,9 @@ class OntologyLoader:
             # Determine concept type from URI
             concept_type = self._determine_concept_type(str(concept_uri))
 
+            # Determine if a concept is obsolete
+            obsolete = self._get_literal_value(concept_uri, OWL.deprecated)
+
             return {
                 "uri": str(concept_uri),
                 "label": label,
@@ -149,6 +158,7 @@ class OntologyLoader:
                 "type": concept_type,
                 "parents": self._get_parent_concepts(concept_uri),
                 "children": self._get_child_concepts(concept_uri),
+                "obsolete": obsolete == "true",
             }
 
         except Exception as e:

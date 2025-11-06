@@ -21,30 +21,30 @@ def test_basic_imports():
         print("✅ Config imported successfully")
         print(f"   Similarity threshold: {settings.similarity_threshold}")
 
-        requests_spec = importlib.util.find_spec("edam_mcp.models.requests")
-        responses_spec = importlib.util.find_spec("edam_mcp.models.responses")
+        mapping_spec = importlib.util.find_spec("edam_mcp.models.mapping")
+        suggestion_spec = importlib.util.find_spec("edam_mcp.models.suggestion")
 
-        if requests_spec is None:
-            print("Module 'edam_mcp.models.requests' is not available")
+        if mapping_spec is None:
+            print("Module 'edam_mcp.models.mapping' is not available")
             return False
-        if responses_spec is None:
-            print("Module 'edam_mcp.models.responses' is not available")
+        if suggestion_spec is None:
+            print("Module 'edam_mcp.models.suggestion' is not available")
             return False
 
-        requests_mod = importlib.import_module("edam_mcp.models.requests")
-        responses_mod = importlib.import_module("edam_mcp.models.responses")
+        mapping_mod = importlib.import_module("edam_mcp.models.mapping")
+        suggestion_mod = importlib.import_module("edam_mcp.models.suggestion")
 
-        for cls_name in ("MappingRequest", "SuggestionRequest"):
-            if not hasattr(requests_mod, cls_name):
-                print(f"Class '{cls_name}' not found in edam_mcp.models.requests")
+        for cls_name in ("MappingRequest", "MappingResponse", "ConceptMatch"):
+            if not hasattr(mapping_mod, cls_name):
+                print(f"Class '{cls_name}' not found in edam_mcp.models.mapping")
                 return False
 
-        for cls_name in ("ConceptMatch", "MappingResponse", "SuggestionResponse"):
-            if not hasattr(responses_mod, cls_name):
-                print(f"Class '{cls_name}' not found in edam_mcp.models.responses")
+        for cls_name in ("SuggestionRequest", "SuggestionResponse", "SuggestedConcept"):
+            if not hasattr(suggestion_mod, cls_name):
+                print(f"Class '{cls_name}' not found in edam_mcp.models.suggestion")
                 return False
 
-        mapping_request = getattr(requests_mod, "MappingRequest")
+        mapping_request = getattr(mapping_mod, "MappingRequest")
 
         print("✅ Request models imported successfully")
 

@@ -2,8 +2,7 @@
 
 from fastmcp.server import Context
 
-from ..models.requests import MappingRequest
-from ..models.responses import MappingResponse
+from ..models.mapping import MappingRequest, MappingResponse
 from ..ontology import ConceptMatcher, OntologyLoader
 from ..utils.context import MockContext
 

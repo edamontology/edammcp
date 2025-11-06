@@ -2,6 +2,11 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.7
     hooks:
-      - id: ruff-check # linter
-        args: [--fix, --exit-non-zero-on-fix] # sort imports and fix
+      - id: ruff-check
+        args:
+          - --fix
+          - --exit-non-zero-on-fix
+          - --show-source
+          - --show-fixes
+          - --verbose
       - id: ruff-format # formatter

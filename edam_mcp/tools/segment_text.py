@@ -100,9 +100,6 @@ def spacy_text_summary(text: str, num_sentences: int = 2) -> str:
 
 # print(spacy_text_summary(text, num_sentences=1))
 
-import spacy
-from spacy.lang.en.stop_words import STOP_WORDS
-from collections import Counter
 
 def spacy_keywords(text: str, max_keywords: int = 3) -> list[str]:
     nlp = spacy.load("en_core_web_sm")

@@ -3,7 +3,7 @@
 import logging
 import re
 
-from ..models.responses import SuggestedConcept
+from ..models.suggestion import SuggestedConcept
 from ..utils.text_processing import preprocess_text
 from .loader import OntologyLoader
 from .matcher import ConceptMatcher

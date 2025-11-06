@@ -1,18 +1,15 @@
 """MCP tool for segmenting input text"""
 
-from fastmcp.server import Context
-
-from ..models.segment import ReadyForMapping
-from ..ontology import ConceptMatcher, OntologyLoader
-from ..utils.context import MockContext
+from collections import Counter
+from heapq import nlargest
+from string import punctuation
 
 import spacy
-import sys
-import json
+from fastmcp.server import Context
 from spacy.lang.en.stop_words import STOP_WORDS
-from string import punctuation
-from heapq import nlargest
-from collections import Counter
+
+from ..models.segment import ReadyForMapping
+
 
 def is_not_all_stopwords(phrase: str, nlp: spacy.language.Language) -> bool:
     """

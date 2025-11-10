@@ -11,7 +11,7 @@ from .models.mapping import MappingRequest, MappingResponse
 from .models.segmentation import SegmentationRequest, SegmentationResponse
 from .models.suggestion import SuggestionRequest, SuggestionResponse
 from .models.workflow import WorkflowSummaryRequest, WorkflowSummaryResponse
-from .tools import map_to_edam_concept, suggest_new_concept
+from .tools import map_to_edam_concept, map_to_edam_operation, suggest_new_concept
 from .tools.segment_text import segment_text
 from .tools.workflow import get_workflow_summary
 
@@ -46,6 +46,10 @@ def create_server() -> FastMCP:
     @mcp.tool
     async def map_to_edam_concept_tool(request: MappingRequest, context: Context) -> MappingResponse:
         return await map_to_edam_concept(request, context)
+
+    @mcp.tool
+    async def map_to_edam_operation_tool(request: MappingRequest, context: Context) -> MappingResponse:
+        return await map_to_edam_operation(request, context)
 
     @mcp.tool
     async def suggest_new_concept_tool(request: SuggestionRequest, context: Context) -> SuggestionResponse:

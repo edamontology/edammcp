@@ -2,6 +2,7 @@
 
 import logging
 import os
+from enum import Enum
 
 import numpy as np
 
@@ -11,6 +12,15 @@ from ..utils.text_processing import preprocess_text
 from .loader import OntologyLoader
 
 logger = logging.getLogger(__name__)
+
+
+# define enum for EDAM concept types
+class EDAMConceptType(Enum):
+    TOPIC = "Topic"
+    OPERATION = "Operation"
+    DATA = "Data"
+    FORMAT = "Format"
+    ANY = "Any"
 
 
 class ConceptMatcher:
@@ -25,6 +35,7 @@ class ConceptMatcher:
         self.ontology_loader = ontology_loader
         self.embedding_model = None
         self.concept_embeddings: dict[str, np.ndarray] = {}
+        self.operation_embeddings: dict[str, np.ndarray] = {}
         self.use_chromadb = settings.use_chromadb
         self.chroma_db = os.path.join(settings.cache_dir, "default.db")
         # Don't build embeddings immediately - do it lazily when needed
@@ -50,6 +61,7 @@ class ConceptMatcher:
                 logger.error("chromadb not available. Install with: pip install chromadb")
                 return
             client = chromadb.PersistentClient(path=self.chroma_db)
+
             # Further details at: https://docs.trychroma.com/docs/collections/configure#hnsw-index-configuration
             embedding_function = SentenceTransformerEmbeddingFunction(settings.embedding_model)
             collection = client.get_or_create_collection(
@@ -57,6 +69,12 @@ class ConceptMatcher:
                 embedding_function=embedding_function,
                 configuration={"hnsw": {"space": "cosine", "ef_construction": 200}},
             )
+            operation_collection = client.get_or_create_collection(
+                name="operation_embeddings",
+                embedding_function=embedding_function,
+                configuration={"hnsw": {"space": "cosine", "ef_construction": 200}},
+            )
+
             logger.info("Building concept embeddings and storing in ChromaDB...")
         else:
             logger.info("Building concept embeddings and storing in memory...")
@@ -101,18 +119,42 @@ class ConceptMatcher:
                         }
                     ],
                 )
+                if concept["type"] == "Operation":
+                    operation_collection.add(
+                        ids=[uri],
+                        embeddings=[embedding.tolist()],
+                        documents=[processed_text],
+                        metadatas=[
+                            {
+                                "label": concept["label"],
+                                "definition": concept.get("definition"),
+                                "synonyms": (
+                                    ", ".join(concept["synonyms"])
+                                    if isinstance(concept.get("synonyms"), list)
+                                    else concept.get("synonyms")
+                                ),
+                            }
+                        ],
+                    )
             else:
                 self.concept_embeddings[uri] = embedding
+                if concept["type"] == "Operation":
+                    self.operation_embeddings[uri] = embedding
 
         if self.use_chromadb:
             logger.info(f"Stored embeddings for {len(self.ontology_loader.concepts)} concepts in ChromaDB")
         else:
             logger.info(f"Built embeddings for {len(self.concept_embeddings)} concepts")
 
+        # Show the size of the embeddings dictionary
+        logger.info(f"Concept embeddings size: {len(self.concept_embeddings)}")
+        logger.info(f"Operation embeddings size: {len(self.operation_embeddings)}")
+
     def match_concepts(
         self,
         description: str,
         context: str | None = None,
+        concept_type: EDAMConceptType = EDAMConceptType.ANY,
         max_results: int = 5,
         min_confidence: float = 0.5,
     ) -> list[ConceptMatch]:
@@ -121,6 +163,7 @@ class ConceptMatcher:
         Args:
             description: Text description to match.
             context: Additional context information.
+            concept_type: Type of EDAM concept to match.
             max_results: Maximum number of matches to return.
             min_confidence: Minimum confidence threshold.
 
@@ -142,7 +185,7 @@ class ConceptMatcher:
         description_embedding = self.embedding_model.encode(processed_description, show_progress_bar=False)
 
         # Calculate similarities
-        similarities = self._calculate_similarities(description_embedding, max_results * 2)
+        similarities = self._calculate_similarities(description_embedding, concept_type, max_results * 2)
 
         # Filter and sort results
         matches = []
@@ -164,11 +207,15 @@ class ConceptMatcher:
         matches.sort(key=lambda x: x.confidence, reverse=True)
         return matches[:max_results]
 
-    def _calculate_similarities(self, description_embedding: np.ndarray, max_results: int) -> list[tuple[str, float]]:
+    def _calculate_similarities(
+        self, description_embedding: np.ndarray, concept_type: EDAMConceptType, max_results: int
+    ) -> list[tuple[str, float]]:
         """Calculate cosine similarities between description and all concepts.
 
         Args:
             description_embedding: Embedding of the description.
+            concept_type: Type of EDAM concept to match.
+            max_results: Maximum number of results to return.
 
         Returns:
             List of (concept_uri, similarity) tuples.
@@ -183,7 +230,14 @@ class ConceptMatcher:
                 return []
 
             client = chromadb.PersistentClient(path=self.chroma_db)
-            collection = client.get_or_create_collection(name="concept_embeddings")
+            if concept_type == EDAMConceptType.OPERATION:
+                logger.info("Using ChromaDB to query operation embeddings")
+                collection = client.get_or_create_collection(name="operation_embeddings")
+                logger.info(f"Collection has {collection.count()} items")
+            else:
+                logger.info("Using ChromaDB to query concept embeddings")
+                collection = client.get_or_create_collection(name="concept_embeddings")
+                logger.info(f"Collection has {collection.count()} items")
             # Use ChromaDB's default query for similarity search
             query_results = collection.query(
                 query_embeddings=[description_embedding],
@@ -195,9 +249,16 @@ class ConceptMatcher:
             similarity_scores = [1.0 - d for d in distances]
             similarities = list(zip(ids, similarity_scores))
         else:
-            for uri, concept_embedding in self.concept_embeddings.items():
-                similarity = self._cosine_similarity(description_embedding, concept_embedding)
-                similarities.append((uri, similarity))
+            if concept_type == EDAMConceptType.OPERATION:
+                logger.info("Calculating similarities using in-memory operation embeddings")
+                for uri, concept_embedding in self.operation_embeddings.items():
+                    similarity = self._cosine_similarity(description_embedding, concept_embedding)
+                    similarities.append((uri, similarity))
+            else:
+                logger.info("Calculating similarities using in-memory concept embeddings")
+                for uri, concept_embedding in self.concept_embeddings.items():
+                    similarity = self._cosine_similarity(description_embedding, concept_embedding)
+                    similarities.append((uri, similarity))
 
         similarities.sort(key=lambda x: x[1], reverse=True)
         return similarities

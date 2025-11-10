@@ -3,7 +3,7 @@
 from fastmcp.server import Context
 
 from ..models.mapping import MappingRequest, MappingResponse
-from ..ontology import ConceptMatcher, OntologyLoader
+from ..ontology import ConceptMatcher, EDAMConceptType, OntologyLoader
 from ..utils.context import MockContext
 
 
@@ -49,6 +49,68 @@ async def map_to_edam_concept(request: MappingRequest, context: Context) -> Mapp
         matches = concept_matcher.match_concepts(
             description=request.description,
             context=request.context,
+            max_results=request.max_results,
+            min_confidence=request.min_confidence,
+        )
+
+        context.info(f"Found {len(matches)} semantic matches")
+
+        return MappingResponse(
+            matches=matches,
+            total_matches=len(matches),
+            has_exact_match=False,
+            confidence_threshold=request.min_confidence,
+        )
+
+    except Exception as e:
+        context.error(f"Error in concept mapping: {e}")
+        raise
+
+
+async def map_to_edam_operation(request: MappingRequest, context: Context) -> MappingResponse:
+    """Map a description to existing EDAM operations (i.e. bioinformatics data processing tasks).
+
+    This tool takes a description (metadata, free text) and finds the most
+    appropriate mappings to EDAM operations. It returns matches
+    with confidence scores, indicating how well each operation matches the description.
+
+    Args:
+        request: Mapping request containing description and parameters.
+        context: MCP context for logging and progress reporting.
+
+    Returns:
+        Mapping response with matched operations and confidence scores.
+    """
+
+    try:
+        # Log the request
+        context.info(f"Mapping description: {request.description[:100]}...")
+
+        # Initialize ontology components
+        ontology_loader = OntologyLoader()
+        if not ontology_loader.load_ontology():
+            raise RuntimeError("Failed to load EDAM ontology")
+
+        concept_matcher = ConceptMatcher(ontology_loader)
+
+        # First try exact matches
+        exact_matches = concept_matcher.find_exact_matches(request.description)
+
+        if exact_matches:
+            context.info(f"Found {len(exact_matches)} exact matches")
+            return MappingResponse(
+                matches=exact_matches,
+                total_matches=len(exact_matches),
+                has_exact_match=True,
+                confidence_threshold=request.min_confidence,
+            )
+
+        # Perform semantic matching
+        context.info("Performing semantic matching...")
+        matches = concept_matcher.match_concepts(
+            description=request.description,
+            context=request.context,
+            concept_type=EDAMConceptType.OPERATION,
             max_results=request.max_results,
             min_confidence=request.min_confidence,
         )

@@ -4,6 +4,7 @@ from .mapping import ConceptMatch, MappingRequest, MappingResponse
 from .segmentation import SegmentationRequest, SegmentationResponse
 from .suggestion import SuggestedConcept, SuggestionRequest, SuggestionResponse
 from .workflow import WorkflowFunction, WorkflowSummaryRequest, WorkflowSummaryResponse
+from .query import BiotoolsQueryRequest, BiotoolsQueryResponse
 
 __all__ = [
     # Mapping models
@@ -21,4 +22,7 @@ __all__ = [
     "WorkflowSummaryRequest",
     "WorkflowSummaryResponse",
     "WorkflowFunction",
+    # Biotools query
+    "BiotoolsQueryRequest",
+    "BiotoolsQueryResponse"
 ]

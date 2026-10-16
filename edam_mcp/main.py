@@ -7,13 +7,17 @@ from fastmcp import FastMCP
 from fastmcp.server import Context
 
 from .config import settings
+
 from .models.mapping import MappingRequest, MappingResponse
 from .models.segmentation import SegmentationRequest, SegmentationResponse
 from .models.suggestion import SuggestionRequest, SuggestionResponse
 from .models.workflow import WorkflowSummaryRequest, WorkflowSummaryResponse
+from .models.query import BiotoolsQueryRequest, BiotoolsQueryResponse
+
 from .tools import map_to_edam_concept, suggest_new_concept
 from .tools.segment_text import segment_text
 from .tools.workflow import get_workflow_summary
+from .tools.query_biotools import query_biotools
 
 # Configure logging
 logging.basicConfig(
@@ -45,11 +49,18 @@ def create_server() -> FastMCP:
 
     @mcp.tool
     async def map_to_edam_concept_tool(request: MappingRequest, context: Context) -> MappingResponse:
+        """Map a description or a structured metadata information to EDAM ontology concepts"""
         return await map_to_edam_concept(request, context)
 
     @mcp.tool
     async def suggest_new_concept_tool(request: SuggestionRequest, context: Context) -> SuggestionResponse:
+        """Suggest a new term to be inserted in the EDAM ontology, provided a description. The user may also indicate the category and a possible specific parent"""
         return await suggest_new_concept(request, context)
+
+    @mcp.tool
+    async def query_biotools_database(request: BiotoolsQueryRequest, context: Context) -> BiotoolsQueryResponse:
+        """Query biotools database searching for tools given the user keyword."""
+        return await query_biotools(request, context)
 
     return mcp
 

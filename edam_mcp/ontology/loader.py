@@ -69,6 +69,26 @@ class OntologyLoader:
         with open(ts_path, "w") as f:
             f.write(str(time.time()))
 
+    def _remove_deprecated_triples(self):
+        triples_before = len(self.graph)
+        logger.info(f"Total number of triples: {triples_before}")
+
+        del_query = """
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+prefix owl: <http://www.w3.org/2002/07/owl#>
+
+delete {
+    ?s ?p ?o .
+}
+where {
+    ?s ?p ?o .
+    ?s rdfs:subClassOf owl:DeprecatedClass .
+}"""
+        self.graph.update(del_query)
+
+        triples_after = len(self.graph)
+        logger.info(f"Number of triples without deprecated concepts: {triples_after}")
+
     def load_ontology(self) -> bool:
         """Load the EDAM ontology from the configured URL.
 
@@ -94,6 +114,7 @@ class OntologyLoader:
             self.graph.bind("skos", SKOS)
 
             self.graph.parse(self.ontology_url)
+            self._remove_deprecated_triples()
 
             # Extract concepts
             self._extract_concepts()

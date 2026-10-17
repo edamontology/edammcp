@@ -239,8 +239,10 @@ Configure your MCP client (e.g., Claude Desktop):
 
 Once connected, test the available tools:
 
-- `map_to_edam_concept`: Map descriptions to EDAM concepts
-- `suggest_new_concept`: Suggest new concepts
+- `map_to_edam_concept_tool`: Map descriptions to EDAM concepts
+- `suggest_new_concept_tool`: Suggest new concepts
+- `query_biotools_by_text_tool`: Find bio.tools tools by keywords or name
+- `query_biotools_by_edam_terms_tool`: Find bio.tools tools annotated with given EDAM terms
 
 ## 🔧 Troubleshooting
 

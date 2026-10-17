@@ -7,11 +7,15 @@ from fastmcp import FastMCP
 from fastmcp.server import Context
 
 from .config import settings
+
+from .models.biotools import BiotoolsQueryResponse, BiotoolsQueryTermsRequest, BiotoolsQueryTextRequest, BiotoolsQueryExactRequest
 from .models.mapping import MappingRequest, MappingResponse
 from .models.segmentation import SegmentationRequest, SegmentationResponse
 from .models.suggestion import SuggestionRequest, SuggestionResponse
 from .models.workflow import WorkflowSummaryRequest, WorkflowSummaryResponse
+
 from .tools import map_to_edam_concept, suggest_new_concept
+from .tools.biotools import query_biotools_by_edam_terms, query_biotools_by_text, query_biotools_by_text_exact_match
 from .tools.segment_text import segment_text
 from .tools.workflow import get_workflow_summary
 
@@ -45,11 +49,30 @@ def create_server() -> FastMCP:
 
     @mcp.tool
     async def map_to_edam_concept_tool(request: MappingRequest, context: Context) -> MappingResponse:
+        """Map a description or a structured metadata information to EDAM ontology concepts"""
         return await map_to_edam_concept(request, context)
 
     @mcp.tool
     async def suggest_new_concept_tool(request: SuggestionRequest, context: Context) -> SuggestionResponse:
+        """Suggest a new term to be inserted in the EDAM ontology, provided a description. The user may also indicate the category and a possible specific parent"""
         return await suggest_new_concept(request, context)
+
+    @mcp.tool
+    async def query_biotools_by_text_tool(request: BiotoolsQueryTextRequest, context: Context) -> BiotoolsQueryResponse:
+        """Query biotools database for tools matching keywords or a tool name."""
+        return await query_biotools_by_text(request, context)
+
+    @mcp.tool
+    async def query_biotools_by_text_exact_match_tool(request: BiotoolsQueryExactRequest, context: Context) -> BiotoolsQueryResponse:
+        """Query biotools database for tools matching exactly the tool name and/or the biotools ID."""
+        return await query_biotools_by_text_exact_match(request, context)
+
+    @mcp.tool
+    async def query_biotools_by_edam_terms_tool(
+        request: BiotoolsQueryTermsRequest, context: Context
+    ) -> BiotoolsQueryResponse:
+        """Query biotools database for tools annotated with all the given EDAM concept URIs (at most one per category: topic, operation, data, format)."""
+        return await query_biotools_by_edam_terms(request, context)
 
     return mcp
 

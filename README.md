@@ -72,26 +72,38 @@ uv run edam-mcp
 
 ### Using with MCP Clients
 
-The server exposes four main tools:
+The server exposes six main tools:
 
-1. **`map_to_edam_concept`** - Maps descriptions to existing EDAM concepts
+1. **`map_to_edam_concept_tool`** - Maps descriptions to existing EDAM concepts
    - **Input**: Description text, context, confidence threshold
    - **Output**: List of matched concepts with confidence scores
    - **Example**: "sequence alignment tool" → "Sequence alignment" (confidence: 0.85)
 
-2. **`suggest_new_concept`** - Suggests new concepts when no match is found
+2. **`suggest_new_concept_tool`** - Suggests new concepts when no match is found
    - **Input**: Description text, concept type, parent concept
    - **Output**: List of suggested new concepts with hierarchical placement
    - **Example**: "quantum protein folding" → "Quantum Protein Folding" (suggested as child of "Sequence alignment")
 
-3. **`segment_text`** - Segment text into topic and keywords using NLP
+3. **`segment_text_tool`** - Segment text into topic and keywords using NLP
    - **Input**: Raw text to be segmented
    - **Output**: Topic summary and list of keywords extracted from the text
    - **Example**: "spaCy is a popular library for efficient Natural Language Processing" → topic: "library spacy language", keywords: ["spacy", "library", "natural language processing"]
 
-4. **`get_workflow_summary`** - Get comprehensive summary of the EDAM mapping workflow for copilot planning
+4. **`get_workflow_summary_tool`** - Get comprehensive summary of the EDAM mapping workflow for copilot planning
    - **Input**: (No parameters required)
    - **Output**: Workflow summary with available functions and their descriptions
+
+5. **`query_biotools_by_text_tool`** - Search [bio.tools](https://bio.tools) for tools matching keywords or a tool name
+   - **Input**: Keywords or tool name, maximum number of results
+   - **Output**: Tools ranked by relevance, each with its EDAM terms (URI and label) for topics, operations, and input and output data and formats, plus the total count bio.tools reports
+   - **Example**: "bwa" → BWA (operation "Read mapping", input format "FASTQ", output format "SAM")
+
+6. **`query_biotools_by_edam_terms_tool`** - Search bio.tools for tools annotated with all the given EDAM terms
+   - **Input**: Up to four EDAM term URIs, at most one each for topic, operation, data and format; maximum number of results
+   - **Output**: Same as `query_biotools_by_text_tool`
+   - **Example**: `topic_3510` and `data_1361` → motifStack, hfAIM
+
+Tools without EDAM annotations come back with empty term fields. The EDAM-term search matches each term exactly and does not include its subclasses.
 
 ### MCP Client Integration
 
@@ -144,17 +156,20 @@ edam_mcp/
 ├── config.py              # Configuration management
 ├── models/                # Pydantic models (organized by functionality)
 │   ├── __init__.py
+│   ├── biotools.py        # bio.tools query models
 │   ├── mapping.py         # Mapping request/response models
 │   ├── suggestion.py      # Suggestion request/response models
 │   ├── segmentation.py   # Text segmentation models
 │   └── workflow.py        # Workflow summary models
 ├── ontology/              # EDAM ontology handling
 │   ├── __init__.py
+│   ├── biotools_searcher.py # bio.tools API search
 │   ├── loader.py          # Ontology loading and parsing
 │   ├── matcher.py         # Concept matching logic
 │   └── suggester.py       # New concept suggestion logic
 ├── tools/                 # MCP tools
 │   ├── __init__.py
+│   ├── biotools.py        # bio.tools query tools
 │   ├── mapping.py         # Mapping tool implementation
 │   ├── suggestion.py      # Suggestion tool implementation
 │   ├── segment_text.py    # Text segmentation tool

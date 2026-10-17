@@ -156,6 +156,9 @@ class OntologyLoader:
             # Determine concept type from URI
             concept_type = self._determine_concept_type(str(concept_uri))
 
+            # Determine if a concept is obsolete
+            obsolete = self._get_literal_value(concept_uri, OWL.deprecated)
+
             return {
                 "uri": str(concept_uri),
                 "label": label,
@@ -166,6 +169,7 @@ class OntologyLoader:
                 "deprecated": "true" in self._get_literal_values(concept_uri, OWL.deprecated),
                 "parents": self._get_parent_concepts(concept_uri),
                 "children": self._get_child_concepts(concept_uri),
+                "obsolete": obsolete == "true",
             }
 
         except Exception as e:

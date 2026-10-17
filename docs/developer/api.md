@@ -112,6 +112,75 @@ for suggestion in response.suggestions:
     print(f"{suggestion.suggested_label}: {suggestion.confidence:.2f}")
 ```
 
+### `query_biotools_by_text`
+
+Searches [bio.tools](https://bio.tools) for tools matching keywords or a tool name, ranked by relevance. Tools without EDAM annotations come back with empty term fields.
+
+#### Request
+
+```python
+class BiotoolsQueryTextRequest(BaseModel):
+    seed: str                          # Keywords or tool name (1-200 characters)
+    max_results: int = 10              # Maximum matches to return (1-100)
+```
+
+#### Response
+
+```python
+class BiotoolsQueryResponse(BaseModel):
+    matches: List[BiotoolsMatch]       # Matched tools
+    total_matches: int                 # Total bio.tools reports, before truncating to max_results
+
+class BiotoolsMatch(BaseModel):
+    name: str                          # Tool name
+    description: str                   # Tool description
+    biotools_link: str                 # https://bio.tools/<biotoolsID>
+    topic_terms: Dict[str, str]        # EDAM URI -> label, for each category below
+    operation_terms: Dict[str, str]
+    input_data_terms: Dict[str, str]
+    input_format_terms: Dict[str, str]
+    output_data_terms: Dict[str, str]
+    output_format_terms: Dict[str, str]
+```
+
+#### Example Usage
+
+```python
+from edam_mcp.tools.biotools import query_biotools_by_text
+from edam_mcp.models.biotools import BiotoolsQueryTextRequest
+
+response = await query_biotools_by_text(BiotoolsQueryTextRequest(seed="bwa", max_results=3), context)
+
+for match in response.matches:
+    print(match.name, list(match.output_format_terms.values()))
+```
+
+### `query_biotools_by_edam_terms`
+
+Searches bio.tools for tools annotated with all the given EDAM terms. bio.tools combines filters only across categories, so the request takes at most one term each for topic, operation, data and format. Each term matches exactly, without its subclasses. The response matches `query_biotools_by_text`.
+
+#### Request
+
+```python
+class BiotoolsQueryTermsRequest(BaseModel):
+    edam_terms: List[str]              # 1-4 EDAM term URIs, at most one per category
+    max_results: int = 10              # Maximum matches to return (1-100)
+```
+
+#### Example Usage
+
+```python
+from edam_mcp.tools.biotools import query_biotools_by_edam_terms
+from edam_mcp.models.biotools import BiotoolsQueryTermsRequest
+
+request = BiotoolsQueryTermsRequest(
+    edam_terms=["http://edamontology.org/topic_3510", "http://edamontology.org/data_1361"]
+)
+response = await query_biotools_by_edam_terms(request, context)
+```
+
+A URI outside topic, operation, data or format, or two terms in one category, raises `ValueError`.
+
 ## 📊 Models
 
 ### Request Models

@@ -356,9 +356,84 @@ async def map_workflow():
 workflow = asyncio.run(map_workflow())
 ```
 
+## 🌳 Narrower and Broader Terms
+
+### 8. Related Concepts of a Mapping
+
+List the narrower and broader concepts of the top match. `map_description_to_concepts` does not take the depth options, so build a `MappingRequest` and call `map_to_edam_concept`:
+
+```python
+import asyncio
+from edam_mcp.models.mapping import MappingRequest
+from edam_mcp.tools.mapping import map_to_edam_concept
+from edam_mcp.utils.context import MockContext
+
+async def related_concepts():
+    """Map a description and list the concepts one step above and below the top match."""
+
+    request = MappingRequest(description="Sequence alignment", descendant_depth=1, ancestor_depth=1)
+    response = await map_to_edam_concept(request, MockContext())
+
+    top = response.matches[0]
+    print(f"Top match: {top.concept_label} ({top.concept_uri})")
+    for concept in response.related:
+        print(f"  {concept.direction} {concept.distance}: {concept.concept_label} ({concept.confidence:.1f})")
+
+# Run the example
+asyncio.run(related_concepts())
+```
+
+**Expected Output:**
+```
+Top match: Sequence alignment (http://edamontology.org/data_0863)
+  descendant 1: Pair sequence alignment (0.8)
+  descendant 1: Nucleic acid sequence alignment (0.8)
+  descendant 1: Protein sequence alignment (0.8)
+  descendant 1: Hybrid sequence alignment (0.8)
+  ancestor 1: Alignment (0.8)
+```
+
+Only the top match is expanded. "Sequence alignment" is both a data concept (`data_0863`) and an operation (`operation_0292`) in EDAM, and here the data concept is ranked first.
+
+### 9. Finding Tools Through Narrower Terms
+
+Search bio.tools for Network analysis and also for the terms one step below it. BoolNet is annotated with Gene regulatory network analysis, not with Network analysis itself, so only the widened search finds it:
+
+```python
+import asyncio
+from edam_mcp.models.biotools import BiotoolsQueryTermsRequest
+from edam_mcp.tools.biotools import query_biotools_by_edam_terms
+from edam_mcp.utils.context import MockContext
+
+NETWORK_ANALYSIS = "http://edamontology.org/operation_3927"
+
+async def narrower_tools():
+    """Find tools annotated with a narrower term than Network analysis."""
+
+    request = BiotoolsQueryTermsRequest(edam_terms=[NETWORK_ANALYSIS], descendant_depth=1, max_results=2000)
+    response = await query_biotools_by_edam_terms(request, MockContext())
+
+    narrower = [m for m in response.matches if m.matched_via[NETWORK_ANALYSIS]["direction"] == "descendant"]
+    print(f"{len(response.matches)} tools, {len(narrower)} found only through narrower terms")
+    for tool in narrower:
+        if tool.biotools_link.endswith("/boolnet"):
+            print(f"BoolNet: {tool.matched_via[NETWORK_ANALYSIS]}")
+
+# Run the example
+asyncio.run(narrower_tools())
+```
+
+**Expected Output** (bio.tools data from November 2026; the counts change as bio.tools entries are added and edited):
+```
+1616 tools, 847 found only through narrower terms
+BoolNet: {'term': 'http://edamontology.org/operation_1781', 'direction': 'descendant', 'distance': 1}
+```
+
+Tools annotated with Network analysis itself come first, so BoolNet only appears with a large `max_results`. Network analysis alone has 769 tools, so with the default of 10 this search returns only exact matches. The run takes about 30 seconds and logs a warning that it reached the limit of 20 bio.tools requests.
+
 ## 🔍 Error Handling
 
-### 8. Robust Error Handling
+### 10. Robust Error Handling
 
 Handle errors gracefully in your applications:
 
@@ -410,7 +485,7 @@ asyncio.run(robust_mapping())
 
 ## 📊 Performance Tips
 
-### 9. Optimizing Performance
+### 11. Optimizing Performance
 
 ```python
 import asyncio

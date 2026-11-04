@@ -87,7 +87,11 @@ async def query_biotools_by_edam_terms(
     try:
         context.info(f"Query EDAM terms: {request.edam_terms[:5]}...")
         matches, total = await asyncio.to_thread(
-            biotools_searcher.query_by_edam_terms, request.edam_terms, request.max_results
+            biotools_searcher.query_by_edam_terms,
+            request.edam_terms,
+            request.max_results,
+            request.descendant_depth,
+            request.ancestor_depth,
         )
         context.info(f"Found {total} tools, returning {len(matches)}")
         return BiotoolsQueryResponse(matches=matches, total_matches=total)

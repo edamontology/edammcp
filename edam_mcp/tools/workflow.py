@@ -105,7 +105,8 @@ async def get_workflow_summary(request: WorkflowSummaryRequest, context: Context
                 "Validates whether a mapped EDAM term faithfully represents the input text. "
                 "Uses unsupervised embedding comparison and ontology structure traversal to detect "
                 "overly generic or overly specific mappings. If the term is too generic, traverses "
-                "children to find more specific matches. If too specific, traverses parents to find "
+                "children to find more specific matches (query_biotools_by_edam_terms_tool: descendant_depth, "
+                "ancestor_depth). If too specific, traverses parents to find "
                 "more general matches. Returns adjusted mapping with rationale."
             ),
             input_format={

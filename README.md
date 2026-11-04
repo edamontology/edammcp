@@ -75,9 +75,10 @@ uv run edam-mcp
 The server exposes seven main tools:
 
 1. **`map_to_edam_concept_tool`** - Maps descriptions to existing EDAM concepts
-   - **Input**: Description text, context, confidence threshold
-   - **Output**: List of matched concepts with confidence scores
+   - **Input**: Description text, context, confidence threshold; optional `descendant_depth` (0-3) and `ancestor_depth` (0-2)
+   - **Output**: List of matched concepts with confidence scores. When a depth is set, `related` also lists the narrower and broader concepts of the top match, each with its `direction` and `distance`
    - **Example**: "sequence alignment tool" → "Sequence alignment" (confidence: 0.85)
+   - **Example**: "Sequence alignment" with `descendant_depth=1` and `ancestor_depth=1` → top match `data_0863`; `related` has four narrower concepts, such as "Protein sequence alignment", and one broader, "Alignment"
 
 2. **`suggest_new_concept_tool`** - Suggests new concepts when no match is found
    - **Input**: Description text, concept type, parent concept
@@ -104,11 +105,12 @@ The server exposes seven main tools:
    - **Example**: ID `bwa` → BWA; ID `no_such_tool` → no match
 
 7. **`query_biotools_by_edam_terms_tool`** - Search bio.tools for tools annotated with all the given EDAM terms
-   - **Input**: Up to four EDAM term URIs, at most one each for topic, operation, data and format; maximum number of results
-   - **Output**: Same as `query_biotools_by_text_tool`
+   - **Input**: Up to four EDAM term URIs, at most one each for topic, operation, data and format; optional `descendant_depth` (0-3) and `ancestor_depth` (0-2); maximum number of results (default 10, up to 2000)
+   - **Output**: Same as `query_biotools_by_text_tool`. When a depth is set, each tool also has `matched_via`, giving the term it matched, the direction and the distance
    - **Example**: `topic_3510` and `data_1361` → motifStack, hfAIM
+   - **Example**: `operation_3927` (Network analysis) with `descendant_depth=1` and `max_results=2000` → BoolNet, matched through the narrower term Gene regulatory network analysis (`operation_1781`). BoolNet ranks around position 1000, so the default of 10 does not reach it
 
-Tools without EDAM annotations come back with empty term fields. The `obsolete` flag is true for terms that are deprecated in, or missing from, the loaded EDAM release. The EDAM-term search rejects obsolete or unknown input terms, matches each term exactly and does not include its subclasses.
+Tools without EDAM annotations come back with empty term fields. The `obsolete` flag is true for terms that are deprecated in, or missing from, the loaded EDAM release. The EDAM-term search rejects obsolete or unknown input terms. By default each term matches exactly; `descendant_depth` and `ancestor_depth` also match narrower or broader terms.
 
 ### MCP Client Integration
 

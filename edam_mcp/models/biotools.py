@@ -51,7 +51,20 @@ class BiotoolsQueryTermsRequest(BaseModel):
         description="EDAM term URIs that every returned tool must be annotated with, at most one per category (topic, operation, data, format)",
     )
 
-    max_results: int = Field(10, ge=1, le=100, description="Maximum number of matches to return")
+    descendant_depth: int = Field(
+        0, ge=0, le=3, description="Also match tools annotated with narrower terms up to this many steps down"
+    )
+
+    ancestor_depth: int = Field(
+        0, ge=0, le=2, description="Also match tools annotated with broader terms up to this many steps up"
+    )
+
+    max_results: int = Field(
+        10,
+        ge=1,
+        le=2000,
+        description="Maximum number of matches to return; with depths, the search stops after 20 bio.tools requests (100 tools each)",
+    )
 
 
 class BiotoolsMatch(BaseModel):
@@ -91,6 +104,11 @@ class BiotoolsMatch(BaseModel):
     output_format_terms: dict[str, dict] = Field(
         default_factory=dict,
         description="EDAM format terms of the tool outputs, URI to {label, obsolete}; obsolete also marks terms unknown to the loaded EDAM",
+    )
+
+    matched_via: dict[str, dict] | None = Field(
+        None,
+        description="Only with descendant_depth or ancestor_depth: each requested term URI to the annotated term it matched {term, direction, distance}",
     )
 
 

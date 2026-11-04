@@ -253,17 +253,30 @@ class OntologyLoader:
 
         return matches[:max_results]
 
-    def get_concept_hierarchy(self, concept_uri: str) -> list[str]:  # TODO: currently  not used
-        """Get the full hierarchy path for a concept."""
-        hierarchy = []
-        current_uri = concept_uri
+    def _walk(self, uri: str, depth: int, key: str) -> dict[str, int]:
+        """Concepts within depth steps of uri along key ("parents" or "children"), with their distance. Skips deprecated."""
+        found = {uri: 0}
+        frontier = [uri]
+        for step in range(1, depth + 1):
+            next_frontier = []
+            for f in frontier:
+                for n in self.concepts.get(f, {}).get(key, []):
+                    if n in self.concepts and not self.concepts[n]["deprecated"] and n not in found:
+                        found[n] = step
+                        next_frontier.append(n)
+            frontier = next_frontier
+        return found
 
-        while current_uri:
-            concept = self.get_concept(current_uri)
-            if concept:
-                hierarchy.insert(0, concept["label"])
-                current_uri = concept["parents"][0] if concept["parents"] else None
-            else:
-                break
+    def get_related(self, uri: str, descendant_depth: int = 0, ancestor_depth: int = 0) -> dict[str, tuple[str, int]]:
+        """Concepts up to descendant_depth below and ancestor_depth above uri, ranked exact, descendant, ancestor.
 
-        return hierarchy
+        Returns:
+            Mapping of concept URI to (direction, distance).
+        """
+        related = {
+            u: ("exact" if d == 0 else "descendant", d)
+            for u, d in self._walk(uri, descendant_depth, "children").items()
+        }
+        for u, d in self._walk(uri, ancestor_depth, "parents").items():
+            related.setdefault(u, ("exact" if d == 0 else "ancestor", d))
+        return related

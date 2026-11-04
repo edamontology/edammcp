@@ -79,7 +79,7 @@ class OntologyLoader:
     def load_ontology(self) -> bool
     def get_concept(self, uri: str) -> Optional[Dict]
     def search_concepts(self, query: str) -> List[Dict]
-    def get_concept_hierarchy(self, concept_uri: str) -> List[str]
+    def get_related(self, uri: str, descendant_depth: int = 0, ancestor_depth: int = 0) -> Dict[str, Tuple[str, int]]
 ```
 
 #### Concept Matcher (`edam_mcp.ontology.matcher`)
@@ -97,7 +97,7 @@ class OntologyLoader:
 class ConceptMatcher:
     def match_concepts(self, description: str, ...) -> List[ConceptMatch]
     def find_exact_matches(self, description: str) -> List[ConceptMatch]
-    def get_concept_neighbors(self, concept_uri: str) -> List[ConceptMatch]
+    def get_related(self, concept_uri: str, descendant_depth: int = 0, ancestor_depth: int = 0) -> List[ConceptMatch]
 ```
 
 #### Concept Suggester (`edam_mcp.ontology.suggester`)

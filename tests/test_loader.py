@@ -52,3 +52,26 @@ def test_legacy_cache_is_rebuilt_without_stale_concepts(tmp_path, monkeypatch):
         loader = OntologyLoader(ontology_url=str(owl))
         assert loader.load_ontology()
         assert [c["label"] for c in loader.concepts.values()] == ["Live"]
+
+
+def test_related_follows_every_parent_and_skips_deprecated():
+    op = "http://edamontology.org/operation_"
+    loader = OntologyLoader()
+    loader.concepts = {
+        op + "1": {"deprecated": False, "parents": [], "children": [op + "2", op + "9"]},
+        op + "2": {"deprecated": False, "parents": [op + "1"], "children": [op + "3"]},
+        op + "3": {"deprecated": False, "parents": [op + "2", op + "4"], "children": []},
+        op + "4": {"deprecated": False, "parents": [], "children": [op + "3"]},
+        op + "9": {"deprecated": True, "parents": [op + "1"], "children": []},
+    }
+    assert loader.get_related(op + "1", descendant_depth=3) == {
+        op + "1": ("exact", 0),
+        op + "2": ("descendant", 1),
+        op + "3": ("descendant", 2),
+    }
+    assert loader.get_related(op + "3", ancestor_depth=2) == {
+        op + "3": ("exact", 0),
+        op + "2": ("ancestor", 1),
+        op + "4": ("ancestor", 1),
+        op + "1": ("ancestor", 2),
+    }

@@ -16,6 +16,8 @@ class MappingRequest(BaseModel):
     context: Optional[str] = None      # Additional context
     max_results: Optional[int] = 5     # Maximum matches to return
     min_confidence: Optional[float] = None  # Minimum confidence threshold (defaults to EDAM_SIMILARITY_THRESHOLD)
+    descendant_depth: int = 0          # Steps down to narrower concepts of the top match (0-3)
+    ancestor_depth: int = 0            # Steps up to broader concepts of the top match (0-2)
 ```
 
 #### Response
@@ -26,6 +28,7 @@ class MappingResponse(BaseModel):
     total_matches: int                 # Total number of matches
     has_exact_match: bool              # Whether exact match found
     confidence_threshold: float        # Threshold used for filtering
+    related: List[ConceptMatch] = []   # Narrower and broader concepts of the top match, if a depth is set
 
 class ConceptMatch(BaseModel):
     concept_uri: str                   # EDAM concept URI
@@ -34,7 +37,11 @@ class ConceptMatch(BaseModel):
     concept_type: str                  # Type (Operation, Data, Format, Topic)
     definition: Optional[str] = None   # Concept definition
     synonyms: List[str] = []           # Alternative names
+    direction: Optional[str] = None    # In related: "descendant" or "ancestor"
+    distance: Optional[int] = None     # In related: steps from the top match
 ```
+
+When `descendant_depth` or `ancestor_depth` is set, `related` lists the concepts up to that many steps below or above the top match (`matches[0]`); the other matches are not expanded. The search follows every parent and child link, so a concept with several parents is found through any of them. Deprecated concepts are skipped. Confidence in `related` is 1.0 minus 0.2 per step.
 
 #### Example Usage
 
@@ -56,6 +63,12 @@ response = await map_to_edam_concept(request, context)
 # Process results
 for match in response.matches:
     print(f"{match.concept_label}: {match.confidence:.2f}")
+
+# Narrower and broader concepts of the top match
+request = MappingRequest(description="Sequence alignment", descendant_depth=1, ancestor_depth=1)
+response = await map_to_edam_concept(request, context)
+for concept in response.related:
+    print(f"{concept.direction} {concept.distance}: {concept.concept_label}")
 ```
 
 ### `suggest_new_concept`
@@ -180,14 +193,18 @@ response = await query_biotools_by_text_exact_match(BiotoolsQueryExactRequest(bi
 
 ### `query_biotools_by_edam_terms`
 
-Searches bio.tools for tools annotated with all the given EDAM terms. bio.tools combines filters only across categories, so the request takes at most one term each for topic, operation, data and format. Each term matches exactly, without its subclasses. The response matches `query_biotools_by_text`.
+Searches bio.tools for tools annotated with all the given EDAM terms. bio.tools combines filters only across categories, so the request takes at most one term each for topic, operation, data and format. Each term matches exactly unless `descendant_depth` (0-3) or `ancestor_depth` (0-2) widens it to narrower or broader terms; matches then carry `matched_via`. The response matches `query_biotools_by_text`.
+
+When a depth is set, bio.tools is queried once per term in the widened set. Tools are sorted by how far their matched terms are from the requested ones: exact matches first, then nearer terms before farther ones. At equal distance, narrower terms come before broader ones. Results are cut to `max_results` (default 10, at most 2000). A broad term can fill the default 10 with exact matches, so reaching tools found only through narrower terms needs a large `max_results`. For example, BoolNet comes back for `operation_3927` with `descendant_depth=1` only at around position 1000. The search stops after 20 bio.tools requests of 100 tools each and logs a warning, so for very broad terms some narrower terms are never queried. In our tests, requests with `max_results=2000` took about 30 seconds.
 
 #### Request
 
 ```python
 class BiotoolsQueryTermsRequest(BaseModel):
     edam_terms: List[str]              # 1-4 EDAM term URIs, at most one per category
-    max_results: int = 10              # Maximum matches to return (1-100)
+    descendant_depth: int = 0          # Also match narrower terms up to N steps down (0-3)
+    ancestor_depth: int = 0            # Also match broader terms up to N steps up (0-2)
+    max_results: int = 10              # Maximum matches to return (1-2000)
 ```
 
 #### Example Usage
@@ -200,7 +217,15 @@ request = BiotoolsQueryTermsRequest(
     edam_terms=["http://edamontology.org/topic_3510", "http://edamontology.org/data_1361"]
 )
 response = await query_biotools_by_edam_terms(request, context)
+
+# Also match tools annotated with terms one step narrower than Network analysis
+term = "http://edamontology.org/operation_3927"
+request = BiotoolsQueryTermsRequest(edam_terms=[term], descendant_depth=1, max_results=2000)
+response = await query_biotools_by_edam_terms(request, context)
+narrower = [m for m in response.matches if m.matched_via[term]["direction"] == "descendant"]
 ```
+
+`matched_via` has one entry per requested term URI. Each entry names the annotated term the tool matched, the direction (`exact`, `descendant` or `ancestor`) and the distance in steps.
 
 Each term in the response has an `obsolete` flag: true when the term is deprecated in, or missing from, the loaded EDAM release.
 

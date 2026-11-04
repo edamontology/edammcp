@@ -262,46 +262,34 @@ class ConceptMatcher:
 
         return matches
 
-    def get_concept_neighbors(self, concept_uri: str, max_distance: int = 2) -> list[ConceptMatch]:
-        """Get neighboring concepts in the ontology hierarchy.
+    def get_related(self, concept_uri: str, descendant_depth: int = 0, ancestor_depth: int = 0) -> list[ConceptMatch]:
+        """Get narrower and broader concepts of concept_uri, ranked exact, descendant, ancestor.
 
         Args:
             concept_uri: URI of the target concept.
-            max_distance: Maximum distance to search.
+            descendant_depth: Steps down to children.
+            ancestor_depth: Steps up to parents.
 
         Returns:
-            List of neighboring concepts.
+            Related concepts, excluding concept_uri itself, with direction and distance set.
         """
-        neighbors = []
-        visited = set()
-        queue = [(concept_uri, 0)]
-
-        while queue:
-            current_uri, distance = queue.pop(0)
-
-            if current_uri in visited or distance > max_distance:
+        related = []
+        for uri, (direction, distance) in self.ontology_loader.get_related(
+            concept_uri, descendant_depth, ancestor_depth
+        ).items():
+            concept = self.ontology_loader.get_concept(uri)
+            if uri == concept_uri or concept is None:
                 continue
-
-            visited.add(current_uri)
-            concept = self.ontology_loader.get_concept(current_uri)
-
-            if concept and distance > 0:  # Exclude the original concept
-                match = ConceptMatch(
-                    concept_uri=current_uri,
+            related.append(
+                ConceptMatch(
+                    concept_uri=uri,
                     concept_label=concept["label"],
                     confidence=1.0 - (distance * 0.2),  # Decrease confidence with distance
                     concept_type=concept["type"],
                     definition=concept["definition"],
                     synonyms=concept["synonyms"],
+                    direction=direction,
+                    distance=distance,
                 )
-                neighbors.append(match)
-
-            # Add parent and child concepts
-            if distance < max_distance:
-                for parent_uri in concept["parents"]:
-                    queue.append((parent_uri, distance + 1))
-
-                for child_uri in concept["children"]:
-                    queue.append((child_uri, distance + 1))
-
-        return neighbors
+            )
+        return related

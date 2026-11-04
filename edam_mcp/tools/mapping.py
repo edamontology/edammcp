@@ -55,29 +55,31 @@ async def map_to_edam_concept(
 
         if exact_matches:
             context.info(f"Found {len(exact_matches)} exact matches")
-            return MappingResponse(
-                matches=exact_matches,
-                total_matches=len(exact_matches),
-                has_exact_match=True,
-                confidence_threshold=min_confidence,
+            matches, has_exact = exact_matches, True
+        else:
+            # Perform semantic matching
+            context.info("Performing semantic matching...")
+            matches = concept_matcher.match_concepts(
+                description=request.description,
+                context=request.context,
+                max_results=request.max_results,
+                min_confidence=min_confidence,
             )
+            context.info(f"Found {len(matches)} semantic matches")
+            has_exact = False
 
-        # Perform semantic matching
-        context.info("Performing semantic matching...")
-        matches = concept_matcher.match_concepts(
-            description=request.description,
-            context=request.context,
-            max_results=request.max_results,
-            min_confidence=min_confidence,
-        )
-
-        context.info(f"Found {len(matches)} semantic matches")
+        related = []
+        if matches and (request.descendant_depth or request.ancestor_depth):
+            related = concept_matcher.get_related(
+                matches[0].concept_uri, request.descendant_depth, request.ancestor_depth
+            )
 
         return MappingResponse(
             matches=matches,
             total_matches=len(matches),
-            has_exact_match=False,
+            has_exact_match=has_exact,
             confidence_threshold=min_confidence,
+            related=related,
         )
 
     except Exception as e:

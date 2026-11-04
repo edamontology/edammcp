@@ -9,7 +9,6 @@ from ..models.mapping import MappingRequest, MappingResponse
 from ..ontology import ConceptMatcher, OntologyLoader
 from ..utils.context import MockContext
 
-
 _matcher: ConceptMatcher | None = None
 _matcher_built = 0.0
 

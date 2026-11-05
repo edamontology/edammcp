@@ -5,7 +5,8 @@ from unittest.mock import Mock, patch
 import pytest
 
 from edam_mcp.models.mapping import ConceptMatch, MappingRequest, MappingResponse
-from edam_mcp.tools.mapping import map_description_to_concepts
+from edam_mcp.tools.mapping import map_description_to_concepts, map_to_edam_concept
+from edam_mcp.utils.context import MockContext
 
 
 class TestMappingTool:
@@ -147,3 +148,27 @@ async def test_suggestion_builds_one_matcher_per_call(mock_matcher, mock_loader,
         await suggest_concepts_for_description("x")
 
     assert mock_matcher.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_related_is_expanded_only_for_top_match_when_depth_requested():
+    top = ConceptMatch(
+        concept_uri="http://edamontology.org/operation_0292",
+        concept_label="Sequence alignment",
+        confidence=0.9,
+        concept_type="Operation",
+    )
+    matcher = Mock()
+    matcher.find_exact_matches.return_value = []
+    matcher.match_concepts.return_value = [top]
+    matcher.get_related.return_value = []
+
+    response = await map_to_edam_concept(
+        MappingRequest(description="alignment", descendant_depth=1), MockContext(), matcher=matcher
+    )
+    matcher.get_related.assert_called_once_with(top.concept_uri, 1, 0)
+    assert response.related == []
+
+    response = await map_to_edam_concept(MappingRequest(description="alignment"), MockContext(), matcher=matcher)
+    assert matcher.get_related.call_count == 1
+    assert response.related == []

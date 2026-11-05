@@ -231,3 +231,103 @@ class TestQueryBiotools:
             [{"uri": obsolete, "term": "a"}, {"uri": "http://edamontology.org/topic_9999", "term": "b"}, {"uri": TOPIC}]
         )
         assert [t["obsolete"] for t in terms.values()] == [True, True, False]
+
+    def test_depth_bounds(self):
+        with pytest.raises(ValidationError):
+            BiotoolsQueryTermsRequest(edam_terms=[TOPIC], descendant_depth=4)
+        with pytest.raises(ValidationError):
+            BiotoolsQueryTermsRequest(edam_terms=[TOPIC], ancestor_depth=3)
+
+
+NARROW = "http://edamontology.org/topic_0160"
+
+
+@pytest.fixture
+def hierarchy(monkeypatch):
+    """TOPIC has the narrower NARROW as child; DATA is unrelated."""
+    concepts = {
+        TOPIC: {"deprecated": False, "parents": [], "children": [NARROW]},
+        NARROW: {"deprecated": False, "parents": [TOPIC], "children": []},
+        DATA: {"deprecated": False, "parents": [], "children": []},
+    }
+    monkeypatch.setattr(biotools_searcher.EDAM_LOADER, "concepts", concepts)
+
+
+def _annotated(_id, topics=(), data=()):
+    functions = [{"input": [{"data": {"uri": d, "term": "x"}, "format": []} for d in data]}] if data else None
+    return _tool(_id, topics=topics, function=functions)
+
+
+# bio.tools filter (topicID) to its tools; the fake ignores every other filter
+BY_TOPIC = {
+    '"topic_3510"': [_annotated("t_exact", topics=[TOPIC], data=[DATA])],
+    '"topic_0160"': [_annotated("t_narrow", topics=[NARROW], data=[DATA]), _annotated("t_no_data", topics=[NARROW])],
+}
+
+
+def _fake_by_topic(url, params, timeout):
+    value = BY_TOPIC[params["topicID"]]
+    response = MagicMock()
+    response.json.return_value = {"count": len(value), "next": None, "list": value}
+    return response
+
+
+@pytest.fixture
+def fake_by_topic(hierarchy):
+    with (
+        patch("edam_mcp.ontology.biotools_searcher.requests.get", side_effect=_fake_by_topic) as get,
+        patch("edam_mcp.ontology.biotools_searcher.sleep"),
+    ):
+        yield get
+
+
+def test_descendant_depth_queries_each_candidate_and_checks_other_terms(fake_by_topic):
+    matches, total = query_by_edam_terms([TOPIC, DATA], descendant_depth=1)
+
+    # one query per topic candidate (the pivot), DATA stays a server-side filter
+    queried = [c.kwargs["params"] for c in fake_by_topic.call_args_list]
+    assert [p["topicID"] for p in queried] == ['"topic_3510"', '"topic_0160"']
+    assert all(p["dataTypeID"] == '"data_1361"' for p in queried)
+
+    # t_no_data lacks DATA and is dropped; exact matches rank first
+    assert [m.name for m in matches] == ["t_exact", "t_narrow"]
+    assert total == 3
+    assert matches[1].matched_via == {
+        TOPIC: {"term": NARROW, "direction": "descendant", "distance": 1},
+        DATA: {"term": DATA, "direction": "exact", "distance": 0},
+    }
+
+
+def test_expansion_is_capped_by_max_calls(fake_by_topic, monkeypatch):
+    monkeypatch.setattr(biotools_searcher, "MAX_CALLS", 1)
+    query_by_edam_terms([TOPIC], descendant_depth=1)
+    assert fake_by_topic.call_count == 1
+
+
+def test_no_depth_leaves_matched_via_unset(fake_by_topic):
+    matches, _ = query_by_edam_terms([TOPIC])
+    assert fake_by_topic.call_count == 1
+    assert all(m.matched_via is None for m in matches)
+
+
+def test_candidates_are_ranked_by_distance_then_narrower(monkeypatch):
+    op = "http://edamontology.org/operation_"
+    c = lambda parents, children: {"deprecated": False, "parents": parents, "children": children}  # noqa: E731
+    concepts = {
+        op + "0": c([op + "9"], [op + "1"]),
+        op + "1": c([op + "0"], [op + "2"]),
+        op + "2": c([op + "1"], []),
+        op + "9": c([], [op + "0"]),
+    }
+    monkeypatch.setattr(biotools_searcher.EDAM_LOADER, "concepts", concepts)
+
+    expanded = biotools_searcher._expand(op + "0", descendant_depth=2, ancestor_depth=1)
+    assert [u[-1] for u in expanded] == ["0", "1", "9", "2"]
+
+    descendant = BiotoolsMatch(name="d", description="", biotools_link="d", operation_terms={op + "1": {}})
+    ancestor = BiotoolsMatch(name="a", description="", biotools_link="a", operation_terms={op + "9": {}})
+    both = BiotoolsMatch(name="b", description="", biotools_link="b", operation_terms={op + "2": {}, op + "9": {}})
+    for m in (ancestor, descendant, both):
+        m.matched_via = biotools_searcher._via(m, {op + "0": expanded})
+    assert both.matched_via[op + "0"]["term"] == op + "9"  # closest wins over the 2-step descendant
+    assert sorted([ancestor, both, descendant], key=biotools_searcher._rank)[0] is descendant

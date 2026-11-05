@@ -28,6 +28,10 @@ class MappingRequest(BaseModel):
         description="Minimum confidence threshold for matches (defaults to EDAM_SIMILARITY_THRESHOLD)",
     )
 
+    descendant_depth: int = Field(default=0, ge=0, le=3, description="Steps down to narrower concepts of the top match")
+
+    ancestor_depth: int = Field(default=0, ge=0, le=2, description="Steps up to broader concepts of the top match")
+
 
 class ConceptMatch(BaseModel):
     """Represents a matched EDAM concept with confidence score."""
@@ -47,6 +51,10 @@ class ConceptMatch(BaseModel):
 
     synonyms: list[str] = Field(default_factory=list, description="List of synonyms for the concept")
 
+    direction: str | None = Field(default=None, description="For related concepts: exact, descendant or ancestor")
+
+    distance: int | None = Field(default=None, description="For related concepts: steps from the top match")
+
 
 class MappingResponse(BaseModel):
     """Response model for concept mapping results."""
@@ -58,3 +66,7 @@ class MappingResponse(BaseModel):
     has_exact_match: bool = Field(..., description="Whether an exact match was found")
 
     confidence_threshold: float = Field(..., description="Confidence threshold used for filtering")
+
+    related: list[ConceptMatch] = Field(
+        default_factory=list, description="Narrower and broader concepts of the top match, if depths were requested"
+    )

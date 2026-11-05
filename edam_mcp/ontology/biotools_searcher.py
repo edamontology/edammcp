@@ -185,9 +185,10 @@ def _filter(uri: str) -> tuple[str, str]:
 
 
 def _expand(uri: str, descendant_depth: int, ancestor_depth: int) -> dict[str, tuple[str, int]]:
-    """EDAM candidates for uri, ranked exact, descendant, ancestor, as URI to (direction, distance)."""
+    """EDAM candidates for uri as URI to (direction, distance), nearest first and narrower before broader on ties."""
     related = EDAM_LOADER.get_related(uri, descendant_depth, ancestor_depth)
-    return {u: v for u, v in related.items() if EDAM_URI.fullmatch(u)}
+    ranked = sorted(related.items(), key=lambda kv: (kv[1][1], kv[1][0] == "ancestor"))
+    return {u: v for u, v in ranked if EDAM_URI.fullmatch(u)}
 
 
 def _via(match: BiotoolsMatch, expanded: dict[str, dict[str, tuple[str, int]]]) -> dict | None:
@@ -208,6 +209,12 @@ def _via(match: BiotoolsMatch, expanded: dict[str, dict[str, tuple[str, int]]]) 
     return via
 
 
+def _rank(match: BiotoolsMatch) -> tuple[int, int]:
+    """Sort key: total distance of the matched terms, then how many of them are broader (ancestor) terms."""
+    via = (match.matched_via or {}).values()
+    return sum(v["distance"] for v in via), sum(v["direction"] == "ancestor" for v in via)
+
+
 def query_by_edam_terms(
     edam_terms: list[str],
     max_results: int = 10,
@@ -219,6 +226,8 @@ def query_by_edam_terms(
     bio.tools only combines filters of different categories, so at most one term per category is allowed.
     With depths, the term with the fewest candidates is queried once per candidate (bio.tools has no OR);
     the other terms and the depths are then checked on each tool's annotations. Queries are capped at MAX_CALLS.
+    Candidates are queried nearest first, and the search stops once max_results tools are found, so with one
+    widened term the result is the nearest matches; with two or more, a closer match may be missed.
 
     Args:
         edam_terms: EDAM concept URIs (topic, operation, data or format), at most one per category.
@@ -272,5 +281,5 @@ def query_by_edam_terms(
             f"EDAM term expansion reached the limit of {MAX_CALLS} bio.tools requests; results may be incomplete"
         )
     if expand:
-        matches.sort(key=lambda m: sum(v["distance"] for v in (m.matched_via or {}).values()))
+        matches.sort(key=_rank)
     return matches[:max_results], total

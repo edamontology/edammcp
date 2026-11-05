@@ -308,3 +308,26 @@ def test_no_depth_leaves_matched_via_unset(fake_by_topic):
     matches, _ = query_by_edam_terms([TOPIC])
     assert fake_by_topic.call_count == 1
     assert all(m.matched_via is None for m in matches)
+
+
+def test_candidates_are_ranked_by_distance_then_narrower(monkeypatch):
+    op = "http://edamontology.org/operation_"
+    c = lambda parents, children: {"deprecated": False, "parents": parents, "children": children}  # noqa: E731
+    concepts = {
+        op + "0": c([op + "9"], [op + "1"]),
+        op + "1": c([op + "0"], [op + "2"]),
+        op + "2": c([op + "1"], []),
+        op + "9": c([], [op + "0"]),
+    }
+    monkeypatch.setattr(biotools_searcher.EDAM_LOADER, "concepts", concepts)
+
+    expanded = biotools_searcher._expand(op + "0", descendant_depth=2, ancestor_depth=1)
+    assert [u[-1] for u in expanded] == ["0", "1", "9", "2"]
+
+    descendant = BiotoolsMatch(name="d", description="", biotools_link="d", operation_terms={op + "1": {}})
+    ancestor = BiotoolsMatch(name="a", description="", biotools_link="a", operation_terms={op + "9": {}})
+    both = BiotoolsMatch(name="b", description="", biotools_link="b", operation_terms={op + "2": {}, op + "9": {}})
+    for m in (ancestor, descendant, both):
+        m.matched_via = biotools_searcher._via(m, {op + "0": expanded})
+    assert both.matched_via[op + "0"]["term"] == op + "9"  # closest wins over the 2-step descendant
+    assert sorted([ancestor, both, descendant], key=biotools_searcher._rank)[0] is descendant

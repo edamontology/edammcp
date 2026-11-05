@@ -196,7 +196,11 @@ def _via(match: BiotoolsMatch, expanded: dict[str, dict[str, tuple[str, int]]]) 
     for uri, candidates in expanded.items():
         category = _split(uri)[1]
         annotated = {t for field in CATEGORY_FIELDS[category] for t in getattr(match, field)}
-        hit = next((c for c in candidates if c in annotated), None)
+        hit = min(
+            (c for c in candidates if c in annotated),
+            key=lambda c: (candidates[c][1], candidates[c][0] == "ancestor"),
+            default=None,
+        )
         if hit is None:
             return None
         direction, distance = candidates[hit]

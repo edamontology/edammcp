@@ -8,15 +8,11 @@ import pytest
 
 from edam_mcp.ontology.matcher import ConceptMatcher
 
-# chromadb needs `overrides`, which uses typing.ByteString (removed in Python 3.14) and has no fixed release yet
-needs_chromadb = pytest.mark.skipif(sys.version_info >= (3, 14), reason="chromadb cannot be imported on Python 3.14")
-
 
 def _concept(label, definition):
     return {"label": label, "definition": definition, "synonyms": [], "type": "Format"}
 
 
-@needs_chromadb
 def test_chromadb_cache_follows_ontology_changes(tmp_path):
     model = Mock()
     model.encode.side_effect = lambda texts, **_: np.random.rand(len(texts), 4)
@@ -66,7 +62,7 @@ def _matcher(tmp_path, use_chromadb, model):
     return matcher
 
 
-@pytest.mark.parametrize("use_chromadb", [False, pytest.param(True, marks=needs_chromadb)])
+@pytest.mark.parametrize("use_chromadb", [False, True])
 def test_embeddings_built_once(tmp_path, use_chromadb):
     model = _fake_model()
     matcher = _matcher(tmp_path, use_chromadb, model)
@@ -79,7 +75,6 @@ def test_embeddings_built_once(tmp_path, use_chromadb):
     assert len(corpus_calls) == 1
 
 
-@needs_chromadb
 def test_chromadb_reuse_skips_encoding(tmp_path):
     _matcher(tmp_path, True, _fake_model()).match_concepts("alpha")
 
@@ -90,7 +85,6 @@ def test_chromadb_reuse_skips_encoding(tmp_path):
     assert all(isinstance(c.args[0], str) for c in model.encode.call_args_list)
 
 
-@needs_chromadb
 def test_chromadb_collection_has_no_default_embedding_function(tmp_path):
     import chromadb
 
@@ -108,7 +102,6 @@ def test_chromadb_missing_raises_clear_error(tmp_path, monkeypatch):
         _matcher(tmp_path, True, _fake_model()).match_concepts("alpha")
 
 
-@needs_chromadb
 def test_chromadb_rebuilds_when_embedding_model_changes(tmp_path, monkeypatch):
     from edam_mcp.config import settings
 
@@ -126,7 +119,6 @@ def test_chromadb_rebuilds_when_embedding_model_changes(tmp_path, monkeypatch):
     assert len(corpus) == 1 and len(corpus[0]) == 3  # every concept re-encoded
 
 
-@needs_chromadb
 def test_chromadb_rebuilds_unlabelled_legacy_collection(tmp_path):
     import chromadb
 

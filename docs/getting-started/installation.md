@@ -193,9 +193,6 @@ EDAM_LOG_LEVEL=INFO
 
 The server embeds every EDAM concept the first time it gets a mapping request. Without ChromaDB this happens again after every restart. Set `EDAM_USE_CHROMADB=true` to keep the embeddings in `$EDAM_CACHE_DIR/default.db`. Later starts reuse them and only re-embed concepts that are new or changed in EDAM. If you change `EDAM_EMBEDDING_MODEL`, the database is rebuilt.
 
-!!! warning "Python 3.14"
-    ChromaDB does not import on Python 3.14. It depends on `overrides`, which uses `typing.ByteString`, and Python 3.14 removed that. No fixed release exists yet, so `EDAM_USE_CHROMADB=true` fails there. Use Python 3.12 or 3.13 for the persistent cache. Everything else works on 3.14.
-
 MCP clients often start the server from a different working directory, so set `EDAM_CACHE_DIR` to an absolute path.
 
 ### Configuration File

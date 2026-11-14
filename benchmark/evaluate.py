@@ -106,6 +106,8 @@ class Dense:
     def build(self):
         self.model = self._model()
         self.uris = list(self.concepts)
+        # One text per concept, aligned with self.uris (rerank input); "multi" falls back to "cur"
+        self.docs = [concept_text(self.concepts[u], self.concepts, self.held, self.text) for u in self.uris]
         if self.text == "multi":
             units, owner = [], []
             for u in self.uris:
@@ -183,7 +185,7 @@ class Rerank:
 
     def search(self, q, k):
         top = np.argsort(-self.d.scores(q))[:30]
-        s = self.ce.predict([(q, self.d.texts[i]) for i in top], show_progress_bar=False)
+        s = self.ce.predict([(q, self.d.docs[i]) for i in top], show_progress_bar=False)
         return [self.uris[top[i]] for i in np.argsort(-s)[:k]]
 
 
@@ -275,23 +277,28 @@ def main():
     print({k: len(v) for k, v in golds.items()}, file=sys.stderr)
 
     rows = []
+    # A/B search the full index; only C searches the index without its held-out synonyms
+    groups = [({}, [g for g in golds if g != "C"]), (held, [g for g in golds if g == "C"])]
     for spec in a.strategies.split(","):
-        # hold-out only matters for gold C; other sets index everything
-        strat = make(spec, concepts, held)
-        t = time.perf_counter()
-        strat.build()
-        build = time.perf_counter() - t
-        for g, data in golds.items():
-            m = score(strat, data, concepts)
-            rows.append(
-                {
-                    "strategy": spec,
-                    "gold": g,
-                    "build_s": round(build, 1),
-                    **{k: round(float(v), 3) for k, v in m.items()},
-                }
-            )
-            print(rows[-1], file=sys.stderr)
+        for hidden, names in groups:
+            if not names:
+                continue
+            strat = make(spec, concepts, hidden)
+            t = time.perf_counter()
+            strat.build()
+            build = time.perf_counter() - t
+            for g in names:
+                data = golds[g]
+                m = score(strat, data, concepts)
+                rows.append(
+                    {
+                        "strategy": spec,
+                        "gold": g,
+                        "build_s": round(build, 1),
+                        **{k: round(float(v), 3) for k, v in m.items()},
+                    }
+                )
+                print(rows[-1], file=sys.stderr)
     if rows:
         cols = list(rows[0])
         out = ["\t".join(cols)] + ["\t".join(str(r[c]) for c in cols) for r in rows]

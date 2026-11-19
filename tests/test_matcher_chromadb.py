@@ -128,3 +128,43 @@ def test_chromadb_rebuilds_unlabelled_legacy_collection(tmp_path):
 
     meta = chromadb.PersistentClient(path=str(tmp_path / "default.db")).get_collection("concept_embeddings").metadata
     assert meta["embedding_model"]
+
+
+def _random_matcher(n, dim=8, seed=0):
+    rng = np.random.default_rng(seed)
+    vecs = {f"c{i}": rng.normal(size=dim) for i in range(n)}
+    loader = Mock()
+    loader.concepts = {u: _concept(u, f"{u} text") for u in vecs}
+    matcher = ConceptMatcher(loader)
+    matcher.use_chromadb = False
+    matcher.embedding_model = Mock()
+    matcher.embedding_model.encode.side_effect = lambda texts, **_: np.array([vecs[t.split()[0]] for t in texts])
+    matcher._build_embeddings()
+    return matcher, vecs, rng
+
+
+def test_in_memory_search_matches_bruteforce_cosine():
+    matcher, vecs, rng = _random_matcher(50)
+    q = rng.normal(size=8)
+    got = matcher._calculate_similarities(q, 10)
+
+    def cos(a, b):
+        return float(a @ b / np.linalg.norm(a) / np.linalg.norm(b))
+
+    want = sorted(((u, cos(q, v)) for u, v in vecs.items()), key=lambda x: x[1], reverse=True)[:10]
+    assert [u for u, _ in got] == [u for u, _ in want]
+    assert np.allclose([s for _, s in got], [s for _, s in want], atol=1e-5)
+
+
+def test_in_memory_search_edge_cases():
+    matcher, _, _ = _random_matcher(3)
+    assert len(matcher._calculate_similarities(np.ones(8), 10)) == 3  # max_results above corpus size
+    assert all(s == 0.0 for _, s in matcher._calculate_similarities(np.zeros(8), 2))  # zero query vector
+
+    empty = Mock()
+    empty.concepts = {}
+    matcher = ConceptMatcher(empty)
+    matcher.use_chromadb = False
+    matcher.embedding_model = Mock()
+    matcher._build_embeddings()
+    assert matcher._calculate_similarities(np.ones(8), 5) == []

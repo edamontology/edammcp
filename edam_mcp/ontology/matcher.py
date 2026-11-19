@@ -13,6 +13,12 @@ from .loader import OntologyLoader
 logger = logging.getLogger(__name__)
 
 
+def _normalize(x: np.ndarray) -> np.ndarray:
+    """Scale vectors (last axis) to unit length; zero vectors stay zero."""
+    norm = np.linalg.norm(x, axis=-1, keepdims=True)
+    return x / np.where(norm == 0, 1, norm)
+
+
 class ConceptMatcher:
     """Handles semantic matching of descriptions to EDAM concepts."""
 
@@ -24,7 +30,9 @@ class ConceptMatcher:
         """
         self.ontology_loader = ontology_loader
         self.embedding_model = None
-        self.concept_embeddings: dict[str, np.ndarray] = {}
+        # In-memory index: row i of _matrix is the unit-norm embedding of _uris[i]
+        self._uris: list[str] = []
+        self._matrix: np.ndarray | None = None
         self.use_chromadb = settings.use_chromadb
         self.chroma_db = os.path.join(settings.cache_dir, "default.db")
         self._ready = False
@@ -120,8 +128,8 @@ class ConceptMatcher:
                 )
             logger.info(f"Stored embeddings for {len(uris)} new/changed concepts in ChromaDB")
         else:
-            self.concept_embeddings.update(zip(uris, embeddings))
-            logger.info(f"Built embeddings for {len(self.concept_embeddings)} concepts")
+            self._uris, self._matrix = uris, _normalize(np.asarray(embeddings, dtype=np.float32))
+            logger.info(f"Built embeddings for {len(self._uris)} concepts")
         self._ready = True
 
     def match_concepts(
@@ -201,24 +209,16 @@ class ConceptMatcher:
             # Convert distances to similarity scores (assuming distances are normalized between 0 and 1)
             similarity_scores = [1.0 - d for d in distances]
             similarities = list(zip(ids, similarity_scores))
-        else:
-            for uri, concept_embedding in self.concept_embeddings.items():
-                similarity = self._cosine_similarity(description_embedding, concept_embedding)
-                similarities.append((uri, similarity))
+        elif self._uris:
+            # Exact cosine search: one matrix-vector product over all concepts.
+            # einsum, not `@`: BLAS threads contend with torch's thread pool right after encode() (~60 ms vs <1 ms)
+            query = _normalize(np.asarray(description_embedding, dtype=np.float32))
+            scores = np.einsum("ij,j->i", self._matrix, query)
+            top = np.argpartition(-scores, min(max_results, len(scores)) - 1)[:max_results]
+            similarities = [(self._uris[i], float(scores[i])) for i in top]
 
         similarities.sort(key=lambda x: x[1], reverse=True)
         return similarities
-
-    def _cosine_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
-        """Calculate cosine similarity between two vectors."""
-        dot_product = np.dot(vec1, vec2)
-        norm1 = np.linalg.norm(vec1)
-        norm2 = np.linalg.norm(vec2)
-
-        if norm1 == 0 or norm2 == 0:
-            return 0.0
-
-        return dot_product / (norm1 * norm2)
 
     def find_exact_matches(self, description: str) -> list[ConceptMatch]:
         """Find exact text matches in concept labels and synonyms.
